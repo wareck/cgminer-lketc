@@ -126,5 +126,4 @@ extern void _simplelog(int prio, const char *str, bool force);
 } while (0)
 
 #endif
-
 #endif /* __LOGGING_H__ */
