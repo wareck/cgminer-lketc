@@ -323,8 +323,6 @@ if test "x$modminer" = xyes; then
 fi
 AM_CONDITIONAL([HAS_MODMINER], [test x$modminer = xyes])
 
-
-
 spondoolies="no"
 
 AC_ARG_ENABLE([spondoolies],
@@ -335,8 +333,6 @@ if test "x$spondoolies" = xyes; then
 	AC_DEFINE([USE_SPONDOOLIES], [1], [Defined to 1 if Spondoolies support is wanted])
 fi
 AM_CONDITIONAL([HAS_SPONDOOLIES], [test x$spondoolies = xyes])
-
-
 
 gridseed="no"
 
@@ -349,8 +345,6 @@ if test "x$gridseed" = xyes; then
 	AC_DEFINE([USE_GRIDSEED], [1], [Defined to 1 if GridSeed support is wanted])
 fi
 AM_CONDITIONAL([HAS_GRIDSEED], [test x$gridseed = xyes])
-
-
 
 zeus="no"
 
