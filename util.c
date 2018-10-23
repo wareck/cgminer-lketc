@@ -16,9 +16,11 @@
 #include <stdarg.h>
 #include <string.h>
 #include <jansson.h>
+
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
 #endif
+
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
