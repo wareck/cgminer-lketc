@@ -60,8 +60,9 @@ static struct name_chip_map {
 	char	*model_name;
 	int	chips_count;
 } lketc_models[] = {
-	{ "",		1  },
+	{ "Brise",		1  },
 	{ "Dragon",		2  },
+	{ "2Dragon",		4  },
 	{ NULL, 0 }
 };
 
