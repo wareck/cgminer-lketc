@@ -349,7 +349,7 @@ AM_CONDITIONAL([HAS_GRIDSEED], [test x$gridseed = xyes])
 zeus="no"
 
 AC_ARG_ENABLE([zeus],
-	[AC_HELP_STRING([--enable-zeus],[Compile support for Zeusminer (default disabled) (EXPERIMENTAL)])],
+	[AC_HELP_STRING([--enable-zeus],[Compile support for Zeusminer (default disabled)])],
 	[zeus=$enableval]
 	)
 if test "x$zeus" = xyes; then
@@ -361,7 +361,7 @@ AM_CONDITIONAL([HAS_ZEUS], [test x$zeus = xyes])
 lketc="no"
 
 AC_ARG_ENABLE([lketc],
-        [AC_HELP_STRING([--enable-lketc],[Compile support for Zeusminer (default disabled) (EXPERIMENTAL)])],
+        [AC_HELP_STRING([--enable-lketc],[Compile support for Zeusminer (default disabled)])],
         [lketc=$enableval]
         )
 if test "x$lketc" = xyes; then
