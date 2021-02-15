@@ -34,6 +34,10 @@
 #include <semaphore.h>
 #endif
 
+#ifdef USE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -3873,7 +3877,7 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#ifndef WIN32
+#if !defined __MINGW32__ || __WINPTHREADS_VERSION >= 0x00050000
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
