@@ -28,13 +28,10 @@
 #include <assert.h>
 #include <signal.h>
 #include <limits.h>
+#include <sha2.h>
 
 #ifdef USE_USBUTILS
 #include <semaphore.h>
-#endif
-
-#ifdef USE_LIBSYSTEMD
-#include <systemd/sd-daemon.h>
 #endif
 
 #include <sys/stat.h>
@@ -55,7 +52,6 @@
 char *curly = ":D";
 #endif
 #include <libgen.h>
-#include <sha2.h>
 
 #include "compat.h"
 #include "miner.h"
@@ -3877,7 +3873,7 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#if !defined __MINGW32__ || __WINPTHREADS_VERSION >= 0x00050000
+#ifndef WIN32
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
