@@ -1,5 +1,6 @@
 /*
- * Copyright 2011-2014 Con Kolivas
+ * Copyright 2011-2018 Con Kolivas
+ * Copyright 2011-2015 Andrew Smith
  * Copyright 2010 Jeff Garzik
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,11 +17,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <jansson.h>
-
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
 #endif
-
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
@@ -39,6 +38,7 @@
 # include <ws2tcpip.h>
 # include <mmsystem.h>
 #endif
+#include <sched.h>
 
 #include "miner.h"
 #include "elist.h"
@@ -48,6 +48,14 @@
 #define DEFAULT_SOCKWAIT 60
 
 bool successful_connect = false;
+
+int no_yield(void)
+{
+	return 0;
+}
+
+int (*selective_yield)(void) = &no_yield;
+
 static void keep_sockalive(SOCKETTYPE fd)
 {
 	const int tcp_one = 1;
@@ -78,6 +86,211 @@ static void keep_sockalive(SOCKETTYPE fd)
 	setsockopt(fd, IPPROTO_TCP, TCP_KEEPALIVE, &tcp_keepintvl, sizeof(tcp_keepintvl));
 #endif /* __APPLE_CC__ */
 
+}
+
+#ifdef WIN32
+/* Generic versions of inet_pton for windows, using different names in case
+ * it is implemented in ming in the future. */
+#define W32NS_INADDRSZ  4
+#define W32NS_IN6ADDRSZ 16
+#define W32NS_INT16SZ   2
+
+static int Inet_Pton4(const char *src, char *dst)
+{
+	uint8_t tmp[W32NS_INADDRSZ], *tp;
+
+	int saw_digit = 0;
+	int octets = 0;
+	*(tp = tmp) = 0;
+
+	int ch;
+	while ((ch = *src++) != '\0')
+	{
+		if (ch >= '0' && ch <= '9')
+		{
+			uint32_t n = *tp * 10 + (ch - '0');
+
+			if (saw_digit && *tp == 0)
+				return 0;
+
+			if (n > 255)
+				return 0;
+
+			*tp = n;
+			if (!saw_digit)
+			{
+				if (++octets > 4)
+					return 0;
+				saw_digit = 1;
+			}
+		}
+		else if (ch == '.' && saw_digit)
+		{
+			if (octets == 4)
+				return 0;
+			*++tp = 0;
+			saw_digit = 0;
+		}
+		else
+			return 0;
+	}
+	if (octets < 4)
+		return 0;
+
+	cg_memcpy(dst, tmp, W32NS_INADDRSZ);
+
+	return 1;
+}
+
+static int Inet_Pton6(const char *src, char *dst)
+{
+	static const char xdigits[] = "0123456789abcdef";
+	uint8_t tmp[W32NS_IN6ADDRSZ];
+
+	uint8_t *tp = (uint8_t*) memset(tmp, '\0', W32NS_IN6ADDRSZ);
+	uint8_t *endp = tp + W32NS_IN6ADDRSZ;
+	uint8_t *colonp = NULL;
+
+	/* Leading :: requires some special handling. */
+	if (*src == ':')
+	{
+		if (*++src != ':')
+			return 0;
+	}
+
+	const char *curtok = src;
+	int saw_xdigit = 0;
+	uint32_t val = 0;
+	int ch;
+	while ((ch = tolower(*src++)) != '\0')
+	{
+		const char *pch = strchr(xdigits, ch);
+		if (pch != NULL)
+		{
+			val <<= 4;
+			val |= (pch - xdigits);
+			if (val > 0xffff)
+				return 0;
+			saw_xdigit = 1;
+			continue;
+		}
+		if (ch == ':')
+		{
+			curtok = src;
+			if (!saw_xdigit)
+			{
+				if (colonp)
+					return 0;
+				colonp = tp;
+				continue;
+			}
+			else if (*src == '\0')
+			{
+				return 0;
+			}
+			if (tp + W32NS_INT16SZ > endp)
+				return 0;
+			*tp++ = (uint8_t) (val >> 8) & 0xff;
+			*tp++ = (uint8_t) val & 0xff;
+			saw_xdigit = 0;
+			val = 0;
+			continue;
+		}
+		if (ch == '.' && ((tp + W32NS_INADDRSZ) <= endp) &&
+			Inet_Pton4(curtok, (char*) tp) > 0)
+		{
+			tp += W32NS_INADDRSZ;
+			saw_xdigit = 0;
+			break; /* '\0' was seen by inet_pton4(). */
+		}
+		return 0;
+	}
+	if (saw_xdigit)
+	{
+		if (tp + W32NS_INT16SZ > endp)
+			return 0;
+		*tp++ = (uint8_t) (val >> 8) & 0xff;
+		*tp++ = (uint8_t) val & 0xff;
+	}
+	if (colonp != NULL)
+	{
+		int i;
+		/*
+			* Since some memmove()'s erroneously fail to handle
+			* overlapping regions, we'll do the shift by hand.
+			*/
+		const int n = tp - colonp;
+
+		if (tp == endp)
+			return 0;
+
+		for (i = 1; i <= n; i++)
+		{
+			endp[-i] = colonp[n - i];
+			colonp[n - i] = 0;
+		}
+		tp = endp;
+	}
+	if (tp != endp)
+		return 0;
+
+	cg_memcpy(dst, tmp, W32NS_IN6ADDRSZ);
+
+	return 1;
+}
+
+int Inet_Pton(int af, const char *src, void *dst)
+{
+	switch (af)
+	{
+		case AF_INET:
+			return Inet_Pton4(src, dst);
+		case AF_INET6:
+			return Inet_Pton6(src, dst);
+		default:
+			return -1;
+	}
+}
+#endif
+
+/* Align a size_t to 4 byte boundaries for fussy arches */
+static inline void align_len(size_t *len)
+{
+	if (*len % 4)
+		*len += 4 - (*len % 4);
+}
+
+void *_cgmalloc(size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = malloc(size);
+	if (unlikely(!ret))
+		quit(1, "Failed to malloc size %d from %s %s:%d", (int)size, file, func, line);
+	return ret;
+}
+
+void *_cgcalloc(const size_t memb, size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = calloc(memb, size);
+	if (unlikely(!ret))
+		quit(1, "Failed to calloc memb %d size %d from %s %s:%d", (int)memb, (int)size, file, func, line);
+	return ret;
+}
+
+void *_cgrealloc(void *ptr, size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = realloc(ptr, size);
+	if (unlikely(!ret))
+		quit(1, "Failed to realloc size %d from %s %s:%d", (int)size, file, func, line);
+	return ret;
 }
 
 struct tq_ent {
@@ -976,10 +1189,7 @@ bool tq_push(struct thread_q *tq, void *data)
 	struct tq_ent *ent;
 	bool rc = true;
 
-	ent = calloc(1, sizeof(*ent));
-	if (!ent)
-		return false;
-
+	ent = cgcalloc(1, sizeof(*ent));
 	ent->data = data;
 	INIT_LIST_HEAD(&ent->q_node);
 
@@ -996,7 +1206,7 @@ bool tq_push(struct thread_q *tq, void *data)
 	return rc;
 }
 
-void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
+void *tq_pop(struct thread_q *tq)
 {
 	struct tq_ent *ent;
 	void *rval = NULL;
@@ -1006,10 +1216,7 @@ void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
 	if (!list_empty(&tq->q))
 		goto pop;
 
-	if (abstime)
-		rc = pthread_cond_timedwait(&tq->cond, &tq->mutex, abstime);
-	else
-		rc = pthread_cond_wait(&tq->cond, &tq->mutex);
+	rc = pthread_cond_wait(&tq->cond, &tq->mutex);
 	if (rc)
 		goto out;
 	if (list_empty(&tq->q))
@@ -1067,7 +1274,7 @@ bool time_less(struct timeval *a, struct timeval *b)
 
 void copy_time(struct timeval *dest, const struct timeval *src)
 {
-	memcpy(dest, src, sizeof(struct timeval));
+	cg_memcpy(dest, src, sizeof(struct timeval));
 }
 
 void timespec_to_val(struct timeval *val, const struct timespec *spec)
@@ -1114,14 +1321,23 @@ void ms_to_timeval(struct timeval *val, int64_t ms)
 	val->tv_usec = tvdiv.rem * 1000;
 }
 
+static void spec_nscheck(struct timespec *ts)
+{
+	while (ts->tv_nsec >= 1000000000) {
+		ts->tv_nsec -= 1000000000;
+		ts->tv_sec++;
+	}
+	while (ts->tv_nsec < 0) {
+		ts->tv_nsec += 1000000000;
+		ts->tv_sec--;
+	}
+}
+
 void timeraddspec(struct timespec *a, const struct timespec *b)
 {
 	a->tv_sec += b->tv_sec;
 	a->tv_nsec += b->tv_nsec;
-	if (a->tv_nsec >= 1000000000) {
-		a->tv_nsec -= 1000000000;
-		a->tv_sec++;
-	}
+	spec_nscheck(a);
 }
 
 static int __maybe_unused timespec_to_ms(struct timespec *ts)
