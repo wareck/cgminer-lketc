@@ -3873,31 +3873,13 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#if !defined __MINGW32__ || __WINPTHREADS_VERSION >= 0x00050000
+#ifndef WIN32
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
 		if (pth && pth->p)
 			pthread_join(*pth, NULL);
 #endif
-	}
-}
-
-static void wait_mining(void)
-{
-	struct thr_info *thr;
-	int i;
-
-	forcelog(LOG_DEBUG, "Waiting on mining threads");
-	/* Kill the mining threads*/
-	for (i = 0; i < mining_threads; i++) {
-		pthread_t *pth = NULL;
-
-		thr = get_thread(i);
-		if (thr && PTH(thr) != 0L)
-			pth = &thr->pth;
-		if (pth && *pth)
-			pthread_join(*pth, NULL);
 	}
 }
 

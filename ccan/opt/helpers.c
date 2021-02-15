@@ -22,12 +22,6 @@ char *opt_set_bool(bool *b)
 	return NULL;
 }
 
-char *opt_set_false(bool *b)
-{
-    *b = false;
-    return NULL;
-}
-
 char *opt_set_invbool(bool *b)
 {
 	*b = false;
