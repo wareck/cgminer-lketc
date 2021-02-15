@@ -3,7 +3,6 @@
 
 #include <semaphore.h>
 
-
 #if defined(unix) || defined(__APPLE__)
 	#include <errno.h>
 	#include <sys/socket.h>
@@ -15,6 +14,7 @@
 	#define INVSOCK -1
 	#define INVINETADDR -1
 	#define CLOSESOCKET close
+	#define INET_PTON inet_pton
 
 	#define SOCKERRMSG strerror(errno)
 	static inline bool sock_blocks(void)
@@ -31,6 +31,7 @@
 	}
 #elif defined WIN32
 	#include <winsock2.h>
+	#include <windows.h>
 	#include <ws2tcpip.h>
 
 	#define SOCKETTYPE SOCKET
@@ -38,6 +39,9 @@
 	#define INVSOCK INVALID_SOCKET
 	#define INVINETADDR INADDR_NONE
 	#define CLOSESOCKET closesocket
+
+	int Inet_Pton(int af, const char *src, void *dst);
+	#define INET_PTON Inet_Pton
 
 	extern char *WSAErrorMsg(void);
 	#define SOCKERRMSG WSAErrorMsg()
