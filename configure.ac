@@ -4,7 +4,7 @@ m4_define([v_maj], [4])
 m4_define([v_min], [3])
 m4_define([v_mic], [5])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
-m4_define([v_ver], [v_maj.v_min.v_mic-scrypt.3])
+m4_define([v_ver], [v_maj.v_min.v_mic-scrypt.2])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
 m4_define([lt_cur], v_mic)
 m4_define([lt_age], v_min)
