@@ -890,7 +890,7 @@ static void set_freq_cmd(GRIDSEED_INFO *info, int pll_r, int pll_f, int pll_od)
 		(pll_f << 21) | (pll_od << 28) | (pll_bs << 31);
 	info->freq = (int)ceil(f_out);
 	memcpy(info->cmd_freq, "\x55\xaa\xef\x00", 4);
-	// *(uint32_t *)(info->cmd_freq + 4) = htole32(cmdf);
+	//*(uint32_t *)(info->cmd_freq + 4) = htole32(cmdf);
 	cmdf = htole32(cmdf);
 	memcpy(info->cmd_freq + 4, &cmdf, 4);
 
@@ -908,7 +908,7 @@ static bool get_options(GRIDSEED_INFO *info, const char *options)
 	if (options == NULL)
 		return false;
 
-	//applog(LOG_NOTICE, "GridSeed options: '%s'", options);
+	applog(LOG_NOTICE, "GridSeed options: '%s'", options);
 	ss = strdup(options);
 	p  = ss;
 	end = p + strlen(p);
@@ -2142,7 +2142,7 @@ static struct api_data *gridseed_api_stats(struct cgpu_info *gridseed)
 
 static void gridseed_get_statline_before(char *buf, size_t siz, struct cgpu_info *gridseed) {
 	GRIDSEED_INFO *info = gridseed->device_data;
-	//tailsprintf(buf, siz, "%4d MHz  ", info->freq);
+	tailsprintf(buf, siz, "%4d MHz  ", info->freq);
 	if (info->mode == MODE_SHA256)
 		tailsprintf(buf, siz, "SHA256");
 	else if (info->mode == MODE_SHA256_DUAL)
@@ -2151,7 +2151,6 @@ static void gridseed_get_statline_before(char *buf, size_t siz, struct cgpu_info
 		tailsprintf(buf, siz, "SCRYPT");
 	else if (info->mode == MODE_SCRYPT_DUAL)
 		tailsprintf(buf, siz, "DUAL / SCRYPT");
-		tailsprintf(buf, siz, "        %4d MHz  ", info->freq); //fix typo
 }
 
 static void gridseed_get_statline(char *buf, size_t siz, struct cgpu_info *gridseed) {

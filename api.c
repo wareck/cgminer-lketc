@@ -1,6 +1,6 @@
 /*
  * Copyright 2011-2014 Andrew Smith
- * Copyright 2011-2013 Con Kolivas
+ * Copyright 2011-2014 Con Kolivas
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -27,15 +27,15 @@
 #include "klist.h"
 
 #if defined(USE_BFLSC) || defined(USE_AVALON) || defined(USE_AVALON2) || \
-	defined(USE_HASHFAST) || defined(USE_BITFURY) || defined(USE_KLONDIKE) || \
+  defined(USE_HASHFAST) || defined(USE_BITFURY) || defined(USE_BLOCKERUPTER) || defined(USE_KLONDIKE) || \
 	defined(USE_KNC) || defined(USE_BAB) || defined(USE_DRILLBIT) || \
 	defined(USE_MINION) || defined(USE_COINTERRA) || defined(USE_BITMINE_A1) || \
-	defined(USE_ANT_S1) || defined(USE_ANT_S2) || defined(USE_SPONDOOLIES) || \
-	defined(USE_GRIDSEED) || defined(USE_ZEUS) || defined(USE_LKETC)
+	defined(USE_ANT_S1) || defined(USE_ANT_S2) || defined(USE_SP10) || defined(USE_SP30) || \
+	defined(USE_ICARUS) || defined(USE_HASHRATIO) || defined(USE_GRIDSEED) || defined(USE_ZEUS) || defined(USE_LKETC)
 #define HAVE_AN_ASIC 1
 #endif
 
-#if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_MODMINER)
+#if defined(USE_BITFORCE) || defined(USE_MODMINER)
 #define HAVE_AN_FPGA 1
 #endif
 
@@ -121,6 +121,11 @@ char *WSAErrorMsg(void) {
 }
 #endif
 
+#if defined(__APPLE__)
+#define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
+#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+#endif
+
 static const char *UNAVAILABLE = " - API will not be available";
 static const char *MUNAVAILABLE = " - API multicast listener will not be available";
 
@@ -133,7 +138,7 @@ static const char SEPARATOR = '|';
 #define JOIN_CMD "CMD="
 #define BETWEEN_JOIN SEPSTR
 
-static const char *APIVERSION = "3.4";
+static const char *APIVERSION = "3.5";
 static const char *DEAD = "Dead";
 static const char *SICK = "Sick";
 static const char *NOSTART = "NoStart";
@@ -177,11 +182,17 @@ static const char *DEVICECODE = ""
 #ifdef USE_BITFURY
 			"BFU "
 #endif
+#ifdef USE_BLOCKERUPTER
+                        "BET "
+#endif
 #ifdef USE_DRILLBIT
 			"DRB "
 #endif
 #ifdef USE_HASHFAST
 			"HFA "
+#endif
+#ifdef USE_HASHRATIO
+			"HRO "
 #endif
 #ifdef USE_BITMINE_A1
 			"BA1 "
@@ -201,8 +212,11 @@ static const char *DEVICECODE = ""
 #ifdef USE_COINTERRA
 			"CTA "
 #endif
-#ifdef USE_SPONDOOLIES
+#ifdef USE_SP10
 			"SPN "
+#endif
+#ifdef USE_SP30
+      "S30 "
 #endif
 #ifdef USE_GRIDSEED
 			"GSD "
@@ -273,6 +287,7 @@ static const char ISJSON = '{';
 // If anyone cares, id=0 for truncated output
 #define JSON4_TRUNCATED	",\"id\":0"
 #define JSON5		"}"
+#define JSON6		"\":"
 
 #define JSON_START	JSON0
 #define JSON_DEVS	JSON1 _DEVS JSON2
@@ -281,6 +296,7 @@ static const char ISJSON = '{';
 #define JSON_STATUS	JSON1 _STATUS JSON2
 #define JSON_VERSION	JSON1 _VERSION JSON2
 #define JSON_MINECONFIG	JSON1 _MINECONFIG JSON2
+#define JSON_ACTION	JSON0 JSON1 _STATUS JSON6
 
 #ifdef HAVE_AN_FPGA
 #define JSON_PGA	JSON1 _PGA JSON2
@@ -533,7 +549,7 @@ struct CODES {
  { SEVERITY_ERR,   MSG_MISPDP,	PARAM_NONE,	"Missing addpool details" },
  { SEVERITY_ERR,   MSG_INVPDP,	PARAM_STR,	"Invalid addpool details '%s'" },
  { SEVERITY_ERR,   MSG_TOOMANYP,PARAM_NONE,	"Reached maximum number of pools (%d)" },
- { SEVERITY_SUCC,  MSG_ADDPOOL,	PARAM_STR,	"Added pool '%s'" },
+ { SEVERITY_SUCC,  MSG_ADDPOOL,	PARAM_POOL,	"Added pool %d: '%s'" },
  { SEVERITY_ERR,   MSG_REMLASTP,PARAM_POOL,	"Cannot remove last pool %d:'%s'" },
  { SEVERITY_ERR,   MSG_ACTPOOL, PARAM_POOL,	"Cannot remove active pool %d:'%s'" },
  { SEVERITY_SUCC,  MSG_REMPOOL, PARAM_BOTH,	"Removed pool %d:'%s'" },
@@ -616,9 +632,9 @@ static bool do_a_restart;
 
 static time_t when = 0;	// when the request occurred
 
-struct IP4ACCESS {
-	in_addr_t ip;
-	in_addr_t mask;
+struct IPACCESS {
+	struct in6_addr ip;
+	struct in6_addr mask;
 	char group;
 };
 
@@ -636,7 +652,7 @@ struct APIGROUPS {
 	char *commands;
 } apigroups['Z' - 'A' + 1]; // only A=0 to Z=25 (R: noprivs, W: allprivs)
 
-static struct IP4ACCESS *ipaccess = NULL;
+static struct IPACCESS *ipaccess = NULL;
 static int ips = 0;
 
 struct io_data {
@@ -2023,7 +2039,6 @@ static const char *status2str(enum alive status)
 static void ascstatus(struct io_data *io_data, int asc, bool isjson, bool precom)
 {
 	struct api_data *root = NULL;
-	struct api_data *extra = NULL;
 	char *enabled;
 	char *status;
 	int numasc = numascs();
@@ -2100,12 +2115,6 @@ static void ascstatus(struct io_data *io_data, int asc, bool isjson, bool precom
 				(double)(cgpu->diff_rejected) / (double)(cgpu->diff1) : 0;
 		root = api_add_percent(root, "Device Rejected%", &rejp, false);
 		root = api_add_elapsed(root, "Device Elapsed", &(dev_runtime), false);
-
-		if (cgpu && cgpu->drv && cgpu->drv->get_api_stats)
-			extra = cgpu->drv->get_api_stats(cgpu);
-
-		if (extra)
-			root = api_add_extra(root, extra);
 
 		root = print_data(io_data, root, isjson, precom);
 	}
@@ -2845,7 +2854,7 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
 	add_pool_details(pool, true, url, user, pass);
 
 	ptr = escape_string(url, isjson);
-	message(io_data, MSG_ADDPOOL, 0, ptr, isjson);
+	message(io_data, MSG_ADDPOOL, pool->pool_no, ptr, isjson);
 	if (ptr != url)
 		free(ptr);
 	ptr = NULL;
@@ -3088,7 +3097,7 @@ static void removepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
 void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
 	if (isjson)
-		io_put(io_data, JSON_START JSON_BYE);
+		io_put(io_data, JSON_ACTION JSON_BYE);
 	else
 		io_put(io_data, _BYE);
 
@@ -3099,7 +3108,7 @@ void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused
 void dorestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
 	if (isjson)
-		io_put(io_data, JSON_START JSON_RESTART);
+		io_put(io_data, JSON_ACTION JSON_RESTART);
 	else
 		io_put(io_data, _RESTART);
 
@@ -4495,17 +4504,20 @@ static void setup_groups()
 
 /*
  * Interpret [W:]IP[/Prefix][,[R|W:]IP2[/Prefix2][,...]] --api-allow option
+ *  ipv6 address should be enclosed with a pair of square brackets and the prefix left outside
  *	special case of 0/0 allows /0 (means all IP addresses)
  */
-#define ALLIP4 "0/0"
+#define ALLIP "0/0"
 /*
  * N.B. IP4 addresses are by Definition 32bit big endian on all platforms
  */
 static void setup_ipaccess()
 {
-	char *buf, *ptr, *comma, *slash, *dot;
-	int ipcount, mask, octet, i;
+	char *buf, *ptr, *comma, *slash, *end;
+	int ipcount, mask, i, shift;
+	bool ipv6 = false;
 	char group;
+	char tmp[30];
 
 	buf = malloc(strlen(opt_api_allow) + 1);
 	if (unlikely(!buf))
@@ -4520,7 +4532,7 @@ static void setup_ipaccess()
 			ipcount++;
 
 	// possibly more than needed, but never less
-	ipaccess = calloc(ipcount, sizeof(struct IP4ACCESS));
+	ipaccess = calloc(ipcount, sizeof(struct IPACCESS));
 	if (unlikely(!ipaccess))
 		quit(1, "Failed to calloc ipaccess");
 
@@ -4550,41 +4562,58 @@ static void setup_ipaccess()
 
 		ipaccess[ips].group = group;
 
-		if (strcmp(ptr, ALLIP4) == 0)
-			ipaccess[ips].ip = ipaccess[ips].mask = 0;
+		if (strcmp(ptr, ALLIP) == 0) {
+			for (i = 0; i < 16; i++) {
+				ipaccess[ips].ip.s6_addr[i] = 0;
+				ipaccess[ips].mask.s6_addr[i] = 0;
+			}
+		}
 		else {
-			slash = strchr(ptr, '/');
-			if (!slash)
-				ipaccess[ips].mask = 0xffffffff;
+			end = strchr(ptr, '/');
+			if (!end)
+				for (i = 0; i < 16; i++)
+					ipaccess[ips].mask.s6_addr[i] = 0xff;
 			else {
+				slash = end--;
+				ipv6 = false;
+				if (*ptr == '[' && *end == ']') {
+					*(ptr++) = '\0';
+					*(end--) = '\0';
+					ipv6 = true;
+				}
 				*(slash++) = '\0';
 				mask = atoi(slash);
-				if (mask < 1 || mask > 32)
+				if (mask < 1 || (mask += ipv6 ? 0 : 96) > 128 )
 					goto popipo; // skip invalid/zero
 
-				ipaccess[ips].mask = 0;
-				while (mask-- >= 0) {
-					octet = 1 << (mask % 8);
-					ipaccess[ips].mask |= (octet << (24 - (8 * (mask >> 3))));
+				for (i = 0; i < 16; i++)
+					ipaccess[ips].mask.s6_addr[i] = 0;
+
+				i = 0;
+				shift = 7;
+				while (mask-- > 0) {
+					ipaccess[ips].mask.s6_addr[i] |= 1 << shift;
+					if (shift-- == 0) {
+						i++;
+						shift = 7;
+					}
 				}
 			}
 
-			ipaccess[ips].ip = 0; // missing default to '.0'
-			for (i = 0; ptr && (i < 4); i++) {
-				dot = strchr(ptr, '.');
-				if (dot)
-					*(dot++) = '\0';
-
-				octet = atoi(ptr);
-				if (octet < 0 || octet > 0xff)
-					goto popipo; // skip invalid
-
-				ipaccess[ips].ip |= (octet << (24 - (i * 8)));
-
-				ptr = dot;
+			for (i = 0; i < 16; i++)
+				ipaccess[ips].ip.s6_addr[i] = 0; // missing default to '[::]'
+			if (ipv6) {
+				if (INET_PTON(AF_INET6, ptr, &(ipaccess[ips].ip)) != 1)
+					goto popipo;
 			}
-
-			ipaccess[ips].ip &= ipaccess[ips].mask;
+			else {
+				// v4 mapped v6 address, such as "::ffff:255.255.255.255"
+				sprintf(tmp, "::ffff:%s", ptr);
+				if (INET_PTON(AF_INET6, tmp, &(ipaccess[ips].ip)) != 1)
+					goto popipo;
+			}
+			for (i = 0; i < 16; i++)
+				ipaccess[ips].ip.s6_addr[i] &= ipaccess[ips].mask.s6_addr[i];
 		}
 
 		ips++;
@@ -4623,18 +4652,37 @@ static void *restart_thread(__maybe_unused void *userdata)
 	return NULL;
 }
 
-static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *group)
+static bool check_connect(struct sockaddr_storage *cli, char **connectaddr, char *group)
 {
 	bool addrok = false;
-	int i;
+	int i, j;
+	bool match;
+	char tmp[30];
+	struct in6_addr client_ip;
 
-	*connectaddr = inet_ntoa(cli->sin_addr);
+	*connectaddr = (char *)malloc(INET6_ADDRSTRLEN);
+	getnameinfo((struct sockaddr *)cli, sizeof(*cli),
+			*connectaddr, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+
+	// v4 mapped v6 address, such as "::ffff:255.255.255.255"
+	if (cli->ss_family == AF_INET) {
+		sprintf(tmp, "::ffff:%s", *connectaddr);
+		INET_PTON(AF_INET6, tmp, &client_ip);
+	}
+	else
+		INET_PTON(AF_INET6, *connectaddr, &client_ip);
 
 	*group = NOPRIVGROUP;
 	if (opt_api_allow) {
-		int client_ip = htonl(cli->sin_addr.s_addr);
 		for (i = 0; i < ips; i++) {
-			if ((client_ip & ipaccess[i].mask) == ipaccess[i].ip) {
+			match = true;
+			for (j = 0; j < 16; j++)
+				if ((client_ip.s6_addr[j] & ipaccess[i].mask.s6_addr[j])
+						!= ipaccess[i].ip.s6_addr[j]) {
+					match = false;
+					break;
+				}
+			if (match) {
 				addrok = true;
 				*group = ipaccess[i].group;
 				break;
@@ -4644,7 +4692,8 @@ static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *gro
 		if (opt_api_network)
 			addrok = true;
 		else
-			addrok = (strcmp(*connectaddr, localaddr) == 0);
+			addrok = (strcmp(*connectaddr, localaddr) == 0)
+				|| IN6_IS_ADDR_LOOPBACK(&client_ip);
 	}
 
 	return addrok;
@@ -4652,13 +4701,11 @@ static bool check_connect(struct sockaddr_in *cli, char **connectaddr, char *gro
 
 static void mcast()
 {
-	struct sockaddr_in listen;
-	struct ip_mreq grp;
-	struct sockaddr_in came_from;
+	struct sockaddr_storage came_from;
 	time_t bindstart;
 	char *binderror;
-	SOCKETTYPE mcast_sock;
-	SOCKETTYPE reply_sock;
+	SOCKETTYPE mcast_sock = INVSOCK;
+	SOCKETTYPE reply_sock = INVSOCK;
 	socklen_t came_from_siz;
 	char *connectaddr;
 	ssize_t rep;
@@ -4668,19 +4715,31 @@ static void mcast()
 	bool addrok;
 	char group;
 
+	char port_s[10], came_from_port[10];
+	struct addrinfo hints, *res, *host, *client;
+
 	char expect[] = "cgminer-"; // first 8 bytes constant
 	char *expect_code;
 	size_t expect_code_len;
 	char buf[1024];
 	char replybuf[1024];
 
-	memset(&grp, 0, sizeof(grp));
-	grp.imr_multiaddr.s_addr = inet_addr(opt_api_mcast_addr);
-	if (grp.imr_multiaddr.s_addr == INADDR_NONE)
-		quit(1, "Invalid Multicast Address");
-	grp.imr_interface.s_addr = INADDR_ANY;
-
-	mcast_sock = socket(AF_INET, SOCK_DGRAM, 0);
+	sprintf(port_s, "%d", opt_api_mcast_port);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	if (getaddrinfo(opt_api_mcast_addr, port_s, &hints, &res) != 0)
+		quit(1, "Invalid API Multicast Address");
+	host = res;
+	while (host != NULL) {
+		mcast_sock = socket(res->ai_family, SOCK_DGRAM, 0);
+		if (mcast_sock > 0)
+			break;
+		host = host->ai_next;
+	}
+	if (mcast_sock == INVSOCK) {
+		freeaddrinfo(res);
+		quit(1, "API mcast could not open socket");
+	}
 
 	int optval = 1;
 	if (SOCKETFAIL(setsockopt(mcast_sock, SOL_SOCKET, SO_REUSEADDR, (void *)(&optval), sizeof(optval)))) {
@@ -4688,16 +4747,11 @@ static void mcast()
 		goto die;
 	}
 
-	memset(&listen, 0, sizeof(listen));
-	listen.sin_family = AF_INET;
-	listen.sin_addr.s_addr = INADDR_ANY;
-	listen.sin_port = htons(opt_api_mcast_port);
-
 	// try for more than 1 minute ... in case the old one hasn't completely gone yet
 	bound = 0;
 	bindstart = time(NULL);
 	while (bound == 0) {
-		if (SOCKETFAIL(bind(mcast_sock, (struct sockaddr *)(&listen), sizeof(listen)))) {
+		if (SOCKETFAIL(bind(mcast_sock, host->ai_addr, host->ai_addrlen))) {
 			binderror = SOCKERRMSG;
 			if ((time(NULL) - bindstart) > 61)
 				break;
@@ -4708,14 +4762,41 @@ static void mcast()
 	}
 
 	if (bound == 0) {
-		applog(LOG_ERR, "API mcast bind to port %d failed (%s)%s", opt_api_port, binderror, MUNAVAILABLE);
+		applog(LOG_ERR, "API mcast bind to port %d failed (%s)%s", opt_api_mcast_port, binderror, MUNAVAILABLE);
 		goto die;
 	}
 
-	if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)(&grp), sizeof(grp)))) {
-		applog(LOG_ERR, "API mcast join failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
-		goto die;
+	switch (host->ai_family) {
+		case AF_INET: {
+			struct ip_mreq grp;
+			memset(&grp, 0, sizeof(grp));
+			grp.imr_multiaddr.s_addr = ((struct sockaddr_in *)(host->ai_addr))->sin_addr.s_addr;
+			grp.imr_interface.s_addr = INADDR_ANY;
+
+			if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+							(void *)(&grp), sizeof(grp)))) {
+				applog(LOG_ERR, "API mcast join failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
+				goto die;
+			}
+			break;
+		}
+		case AF_INET6: {
+			struct ipv6_mreq grp;
+			memcpy(&grp.ipv6mr_multiaddr, &(((struct sockaddr_in6 *)(host->ai_addr))->sin6_addr),
+					sizeof(struct in6_addr));
+			grp.ipv6mr_interface= 0;
+
+			if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
+							(void *)(&grp), sizeof(grp)))) {
+				applog(LOG_ERR, "API mcast join failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
+				goto die;
+			}
+			break;
+		}
+		default:
+			break;
 	}
+	freeaddrinfo(res);
 
 	expect_code_len = sizeof(expect) + strlen(opt_api_mcast_code);
 	expect_code = malloc(expect_code_len+1);
@@ -4746,10 +4827,11 @@ static void mcast()
 		if (rep > 0 && buf[rep-1] == '\n')
 			buf[--rep] = '\0';
 
-		applog(LOG_DEBUG, "API mcast request rep=%d (%s) from %s:%d",
-					(int)rep, buf,
-					inet_ntoa(came_from.sin_addr),
-					ntohs(came_from.sin_port));
+		getnameinfo((struct sockaddr *)(&came_from), came_from_siz,
+				NULL, 0, came_from_port, sizeof(came_from_port), NI_NUMERICHOST);
+
+		applog(LOG_DEBUG, "API mcast request rep=%d (%s) from [%s]:%s",
+					(int)rep, buf, connectaddr, came_from_port);
 
 		if ((size_t)rep > expect_code_len && memcmp(buf, expect_code, expect_code_len) == 0) {
 			reply_port = atoi(&buf[expect_code_len]);
@@ -4760,16 +4842,30 @@ static void mcast()
 				applog(LOG_DEBUG, "API mcast request OK port %s=%d",
 							&buf[expect_code_len], reply_port);
 
-				came_from.sin_port = htons(reply_port);
-				reply_sock = socket(AF_INET, SOCK_DGRAM, 0);
+				if (getaddrinfo(connectaddr, &buf[expect_code_len], &hints, &res) != 0) {
+					applog(LOG_ERR, "Invalid client address %s", connectaddr);
+					continue;
+				}
+				client = res;
+				while (client) {
+					reply_sock = socket(res->ai_family, SOCK_DGRAM, 0);
+					if (mcast_sock > 0)
+						break;
+					client = client->ai_next;
+				}
+				if (reply_sock == INVSOCK) {
+					freeaddrinfo(res);
+					applog(LOG_ERR, "API mcast could not open socket to client %s", connectaddr);
+					continue;
+				}
 
 				snprintf(replybuf, sizeof(replybuf),
 							"cgm-" API_MCAST_CODE "-%d-%s",
 							opt_api_port, opt_api_mcast_des);
 
 				rep = sendto(reply_sock, replybuf, strlen(replybuf)+1,
-						0, (struct sockaddr *)(&came_from),
-						sizeof(came_from));
+						0, client->ai_addr, client->ai_addrlen);
+				freeaddrinfo(res);
 				if (SOCKETFAIL(rep)) {
 					applog(LOG_DEBUG, "API mcast send reply failed (%s) (%d)",
 								SOCKERRMSG, (int)reply_sock);
@@ -4829,8 +4925,8 @@ void api(int api_thr_id)
 	char *binderror;
 	time_t bindstart;
 	short int port = opt_api_port;
-	struct sockaddr_in serv;
-	struct sockaddr_in cli;
+	char port_s[10];
+	struct sockaddr_storage cli;
 	socklen_t clisiz;
 	char cmdbuf[100];
 	char *cmd = NULL;
@@ -4843,6 +4939,7 @@ void api(int api_thr_id)
 	bool isjson;
 	bool did, isjoin = false, firstjoin;
 	int i;
+	struct addrinfo hints, *res, *host;
 
 	SOCKETTYPE *apisock;
 
@@ -4878,27 +4975,28 @@ void api(int api_thr_id)
 	 * to ensure curl has already called WSAStartup() in windows */
 	cgsleep_ms(opt_log_interval*1000);
 
-	*apisock = socket(AF_INET, SOCK_STREAM, 0);
-	if (*apisock == INVSOCK) {
-		applog(LOG_ERR, "API1 initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
+	sprintf(port_s, "%d", port);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = AF_UNSPEC;
+	if (getaddrinfo(opt_api_host, port_s, &hints, &res) != 0) {
+		applog(LOG_ERR, "API failed to resolve %s", opt_api_host);
 		free(apisock);
 		return;
 	}
-
-	memset(&serv, 0, sizeof(serv));
-
-	serv.sin_family = AF_INET;
-
-	if (!opt_api_allow && !opt_api_network) {
-		serv.sin_addr.s_addr = inet_addr(localaddr);
-		if (serv.sin_addr.s_addr == (in_addr_t)INVINETADDR) {
-			applog(LOG_ERR, "API2 initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
-			free(apisock);
-			return;
-		}
+	host = res;
+	while (host) {
+		*apisock = socket(res->ai_family, SOCK_STREAM, 0);
+		if (*apisock > 0)
+			break;
+		host = host->ai_next;
 	}
-
-	serv.sin_port = htons(port);
+	if (*apisock == INVSOCK) {
+		applog(LOG_ERR, "API initialisation failed (%s)%s", SOCKERRMSG, UNAVAILABLE);
+		freeaddrinfo(res);
+		free(apisock);
+		return;
+	}
 
 #ifndef WIN32
 	// On linux with SO_REUSEADDR, bind will get the port if the previous
@@ -4918,7 +5016,7 @@ void api(int api_thr_id)
 	bound = 0;
 	bindstart = time(NULL);
 	while (bound == 0) {
-		if (SOCKETFAIL(bind(*apisock, (struct sockaddr *)(&serv), sizeof(serv)))) {
+		if (SOCKETFAIL(bind(*apisock, host->ai_addr, host->ai_addrlen))) {
 			binderror = SOCKERRMSG;
 			if ((time(NULL) - bindstart) > 61)
 				break;
@@ -4929,6 +5027,7 @@ void api(int api_thr_id)
 		} else
 			bound = 1;
 	}
+	freeaddrinfo(res);
 
 	if (bound == 0) {
 		applog(LOG_ERR, "API bind to port %d failed (%s)%s", port, binderror, UNAVAILABLE);
@@ -4964,7 +5063,7 @@ void api(int api_thr_id)
 			goto die;
 		}
 
-		addrok = check_connect(&cli, &connectaddr, &group);
+		addrok = check_connect((struct sockaddr_storage *)&cli, &connectaddr, &group);
 		applog(LOG_DEBUG, "API: connection from %s - %s",
 					connectaddr, addrok ? "Accepted" : "Ignored");
 
@@ -5003,13 +5102,7 @@ void api(int api_thr_id)
 
 					param = NULL;
 
-#if JANSSON_MAJOR_VERSION > 2 || (JANSSON_MAJOR_VERSION == 2 && JANSSON_MINOR_VERSION > 0)
 					json_config = json_loadb(buf, n, 0, &json_err);
-#elif JANSSON_MAJOR_VERSION > 1
-					json_config = json_loads(buf, 0, &json_err);
-#else
-					json_config = json_loads(buf, &json_err);
-#endif
 
 					if (!json_is_object(json_config)) {
 						message(io_data, MSG_INVJSON, 0, NULL, isjson);
@@ -5134,7 +5227,7 @@ die:
 	pthread_cleanup_pop(true);
 
 	free(apisock);
-	
+
 	if (opt_debug)
 		applog(LOG_DEBUG, "API: terminating due to: %s",
 				do_a_quit ? "QUIT" : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));

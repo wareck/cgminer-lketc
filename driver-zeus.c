@@ -414,9 +414,7 @@ static bool zeus_initialize_ftdi(struct cgpu_info *zeus)
 		return false;
 
 	// Latency
-	if (zeus_usb_control_transfer(zeus, FTDI_TYPE_OUT, FTDI_REQUEST_LATENCY,
-		100, interface, C_LATENCY))
-		return false;
+	usb_ftdi_set_latency(zeus);
 
 	// Data
 	if (zeus_usb_control_transfer(zeus, FTDI_TYPE_OUT, FTDI_REQUEST_DATA,
@@ -452,7 +450,6 @@ static bool zeus_initialize_ftdi(struct cgpu_info *zeus)
 
 static bool zeus_initialize_usb(struct cgpu_info *zeus)
 {
-	struct ZEUS_INFO *info = zeus->device_data;
 	enum sub_ident ident;
 
 	if (zeus->usbinfo.nodev)
@@ -462,10 +459,8 @@ static bool zeus_initialize_usb(struct cgpu_info *zeus)
 
 	switch (ident) {
 	case IDENT_ZUS1:
-		info->read_data_offset = 0;
 		return zeus_initialize_cp2102(zeus);
 	case IDENT_ZUS2:
-		info->read_data_offset = 2;		// FTDIRL adds 2 status bytes
 		return zeus_initialize_ftdi(zeus);
 	default:
 		applog(LOG_ERR, "zeus_initialize_usb called on wrong device, ident=%d", ident);
@@ -705,7 +700,6 @@ static bool zeus_detect_one_serial(const char *devpath)
 		quit(1, "chips_count_max must be a power of 2");
 	info->chip_clk = chip_clk;
 	info->chips_bit_num = log_2(chips_count_max);
-	info->read_data_offset = 0;
 
 	if (!add_cgpu(zeus))
 		quit(1, "Failed to add_cgpu");
@@ -735,35 +729,23 @@ static void zeus_purge_work(struct cgpu_info *zeus)
 static bool zeus_read_response(struct cgpu_info *zeus)
 {
 	struct ZEUS_INFO *info = zeus->device_data;
-	unsigned char evtpkt[ZEUS_READ_BUFFER];
+	unsigned char evtpkt[ZEUS_EVENT_PKT_LEN];
 	uint32_t nonce, chip, core;
 	int ret, err;
 	double duration_s;
 	bool valid;
 
 	if (using_libusb(info)) {
-		//err = usb_read_timeout(zeus, (char *)evtpkt, sizeof(evtpkt), &ret, 250, C_GETRESULTS);
-		err = usb_read_once(zeus, (char *)evtpkt, sizeof(evtpkt), &ret, C_GETRESULTS);
-
-#if ZEUS_PROTOCOL_DEBUG
-		if (opt_zeus_debug) {
-			char *hexstr;
-			hexstr = bin2hex(evtpkt, ret);
-			applog(LOG_DEBUG, "< %s    err=%d ret=%d", hexstr, err, ret);
-			free(hexstr);
-		}
-#endif
-
+		err = usb_read_timeout(zeus, (char *)evtpkt, sizeof(evtpkt), &ret, 250, C_GETRESULTS);
 		if (err != LIBUSB_SUCCESS && err != LIBUSB_ERROR_TIMEOUT) {
 			applog(LOG_ERR, "%s%d: USB read error: %s",
 				zeus->drv->name, zeus->device_id, libusb_error_name(err));
 			return false;
-		}
-
-		if (ret < ZEUS_EVENT_PKT_LEN + info->read_data_offset)
+		} else if (err == LIBUSB_ERROR_TIMEOUT) {
 			return true;
+		}
 	} else {
-		ret = zeus_serial_read(info->device_fd, evtpkt, ZEUS_EVENT_PKT_LEN, 1, NULL);
+		ret = zeus_serial_read(info->device_fd, evtpkt, sizeof(evtpkt), 1, NULL);
 		if (ret < 0) {			// error
 			info->serial_reopen = true;
 			notify_send_work_thread(zeus);
@@ -776,7 +758,7 @@ static bool zeus_read_response(struct cgpu_info *zeus)
 
 	cgtime(&info->workend);
 
-	memcpy(&nonce, evtpkt + info->read_data_offset, ZEUS_EVENT_PKT_LEN);
+	memcpy(&nonce, evtpkt, sizeof(evtpkt));
 	nonce = be32toh(nonce);
 
 	mutex_lock(&info->lock);
@@ -866,14 +848,6 @@ static bool zeus_send_work(struct cgpu_info *zeus, struct work *work)
 	rev(cmdpkt + 4, 80);
 
 	if (using_libusb(info)) {	// in libusb mode we send via usb ;)
-#if ZEUS_PROTOCOL_DEBUG
-		if (opt_zeus_debug) {
-			char *hexstr;
-			hexstr = bin2hex(cmdpkt, sizeof(cmdpkt));
-			applog(LOG_DEBUG, "> %s", hexstr);
-			free(hexstr);
-		}
-#endif
 		if (usb_write(zeus, (char *)cmdpkt, sizeof(cmdpkt), &ret, C_SENDWORK) != LIBUSB_SUCCESS ||
 			ret != sizeof(cmdpkt))
 			return false;
@@ -1043,7 +1017,7 @@ static int64_t zeus_scanwork(struct thr_info *thr)
 		return 0;
 	}
 
-	if (unlikely(!zeus_read_response(zeus)))  // reads either from serial or libusb or times out
+	if (unlikely(zeus_read_response(zeus) < 0))  // reads either from serial or libusb or times out
 		return 0;
 
 	if (thr->work_restart || thr->work_update) {

@@ -1,7 +1,7 @@
 cgminer-scrypt-2 + lketc support
 ================================
 
-CGMiner 4.3.5 with GridSeed, Zeus and Lketc scrypt ASIC support.
+CGMiner 4.7.0 with GridSeed, Zeus and Lketc scrypt ASIC support.
 
 This file describes Lketc-specific settings and options.
 

@@ -1,7 +1,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-JANSSON_CPPFLAGS= -I$(top_builddir)/compat/jansson-2.5/src -I$(top_srcdir)/compat/jansson-2.5/src
+JANSSON_CPPFLAGS= -I$(top_builddir)/compat/jansson-2.6/src -I$(top_srcdir)/compat/jansson-2.6/src
 
 if WANT_USBUTILS
 USBUTILS_CPPFLAGS = -I$(top_builddir)/compat/libusb-1.0/libusb -I$(top_srcdir)/compat/libusb-1.0/libusb
@@ -63,13 +63,18 @@ if WANT_LIBBITFURY
 cgminer_SOURCES += libbitfury.c libbitfury.h mcp2210.c mcp2210.h
 endif
 
+if WANT_CRC16
+cgminer_SOURCES += crc16.c crc.h
+endif
+
 # Device drivers
 if HAS_AVALON
 cgminer_SOURCES += driver-avalon.c driver-avalon.h
 endif
 
 if HAS_KNC
-cgminer_SOURCES += driver-knc-spi-fpga.c
+cgminer_SOURCES += driver-knc.c knc-asic.c knc-asic.h knc-transport.h knc-transport-spi.c
+cgminer_LDADD   += -lz
 endif
 
 if HAS_BFLSC
@@ -82,6 +87,10 @@ endif
 
 if HAS_HASHFAST
 cgminer_SOURCES += driver-hashfast.c driver-hashfast.h hf_protocol.h hf_protocol_be.h
+endif
+
+if HAS_HASHRATIO
+cgminer_SOURCES += driver-hashratio.c driver-hashratio.h
 endif
 
 if HAS_BITFURY
@@ -114,9 +123,15 @@ if HAS_COINTERRA
 cgminer_SOURCES += driver-cointerra.c driver-cointerra.h
 endif
 
-if HAS_SPONDOOLIES
-cgminer_SOURCES += driver-spondoolies.c driver-spondoolies.h \
-		   mg_proto_parser.c mg_proto_parser.h
+if HAS_SP10
+cgminer_SOURCES += driver-spondoolies-sp10.c driver-spondoolies-sp10.h \
+		   driver-spondoolies-sp10-p.c driver-spondoolies-sp10-p.h
+endif
+
+
+if HAS_SP30
+cgminer_SOURCES += driver-spondoolies-sp30.c driver-spondoolies-sp30.h \
+		   driver-spondoolies-sp30-p.c driver-spondoolies-sp30-p.h
 endif
 
 if HAS_BAB
@@ -124,7 +139,7 @@ cgminer_SOURCES += driver-bab.c
 endif
 
 if HAS_AVALON2
-cgminer_SOURCES += driver-avalon2.c driver-avalon2.h crc16.c crc.h
+cgminer_SOURCES += driver-avalon2.c driver-avalon2.h
 endif
 
 if HAS_MINION
@@ -155,4 +170,8 @@ endif
 
 if HAS_LKETC
 cgminer_SOURCES += driver-lketc.c driver-lketc.h
+endif
+
+if HAS_BLOCKERUPTER
+cgminer_SOURCES += driver-blockerupter.c driver-blockerupter.h
 endif

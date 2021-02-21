@@ -17,10 +17,9 @@
 
 #define ZEUS_COMMAND_PKT_LEN		84
 #define ZEUS_EVENT_PKT_LEN		4
-#define ZEUS_READ_BUFFER		ZEUS_EVENT_PKT_LEN + 2	// 2 = max value of read_data_offset; allows 2 extra FTDI status bytes
 
 #define ZEUS_CLK_MAX			382	// 0xff * 3/2
-#define ZEUS_CLK_MIN			328
+#define ZEUS_CLK_MIN			2
 
 #define ZEUS_USB_ID_MODEL_STR1		"CP2102_USB_to_UART_Bridge_Controller"
 #define ZEUS_USB_ID_MODEL_STR2		"FT232R_USB_UART"
@@ -63,7 +62,6 @@ struct ZEUS_INFO {
 	int		chips_count;
 	int		chip_clk;
 	int		chips_bit_num;		// log2(chips_count_max)
-	int		read_data_offset;
 };
 
 extern struct device_drv zeus_drv;

@@ -668,8 +668,7 @@ static void cta_parse_msg(struct thr_info *thr, struct cgpu_info *cointerra,
 		    (buf[CTA_MSG_TYPE] != CTA_RECV_WDONE)) {
 			if (unlikely(verify_checksum(buf) == 0)) {
 				inc_hw_errors(thr);
-				applog(LOG_WARNING, "%s %d: checksum bad",cointerra->drv->name,cointerra->device_id);
-				return;
+				applog(LOG_INFO, "%s %d: checksum bad",cointerra->drv->name,cointerra->device_id);
 			}
 		}
 
@@ -1335,7 +1334,7 @@ static struct api_data *cta_api_stats(struct cgpu_info *cgpu)
 
 	for (i = 0; i < CTA_CORES; i++) {
 		sprintf(buf, "CoreFmatch%d", i);
-		root = api_add_int16(root, buf, &info->fmatch_errors[i], false);
+		root = api_add_uint16(root, buf, &info->fmatch_errors[i], false);
 	}
 
 	return root;

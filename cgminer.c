@@ -28,7 +28,6 @@
 #include <assert.h>
 #include <signal.h>
 #include <limits.h>
-#include <sha2.h>
 
 #ifdef USE_USBUTILS
 #include <semaphore.h>
@@ -40,9 +39,7 @@
 #ifndef WIN32
 #include <sys/resource.h>
 #else
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
 #endif
 #include <ccan/opt/opt.h>
 #include <jansson.h>
@@ -52,6 +49,7 @@
 char *curly = ":D";
 #endif
 #include <libgen.h>
+#include <sha2.h>
 
 #include "compat.h"
 #include "miner.h"
@@ -79,10 +77,17 @@ char *curly = ":D";
 #include "driver-bflsc.h"
 #endif
 
-#ifdef USE_SPONDOOLIES
-#include "driver-spondoolies.h"
+#ifdef USE_SP10
+#include "driver-spondoolies-sp10.h"
 #endif
 
+#ifdef USE_SP30
+#include "driver-spondoolies-sp30.h"
+#endif
+
+#ifdef USE_BLOCK_ERUPTER
+#include "driver-blockerupter.h"
+#endif
 
 #ifdef USE_BITFURY
 #include "driver-bitfury.h"
@@ -166,7 +171,7 @@ bool opt_loginput;
 bool opt_compact;
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
-int opt_queue = -1;
+int opt_queue = 1;
 static int max_queue = 1;
 int opt_scantime = -1;
 int opt_expiry = 120;
@@ -204,7 +209,6 @@ static bool switch_status;
 static bool opt_submit_stale = true;
 static int opt_shares;
 bool opt_fail_only;
-static int opt_fail_switch_delay = 300;
 static bool opt_fix_protocol;
 bool opt_lowmem;
 bool opt_autofan;
@@ -214,6 +218,7 @@ char *opt_api_allow = NULL;
 char *opt_api_groups;
 char *opt_api_description = PACKAGE_STRING;
 int opt_api_port = 4028;
+char *opt_api_host = API_LISTEN_ADDR;
 bool opt_api_listen;
 bool opt_api_mcast;
 char *opt_api_mcast_addr = API_MCAST_ADDR;
@@ -228,6 +233,7 @@ static bool no_work;
 char *opt_icarus_options = NULL;
 char *opt_icarus_timing = NULL;
 float opt_anu_freq = 200;
+float opt_rock_freq = 270;
 #endif
 bool opt_worktime;
 #ifdef USE_AVALON
@@ -240,6 +246,12 @@ static char *opt_set_avalon_freq;
 static char *opt_set_avalon2_freq;
 static char *opt_set_avalon2_fan;
 static char *opt_set_avalon2_voltage;
+#endif
+#ifdef USE_BLOCKERUPTER
+int opt_bet_clk = 0;
+#endif
+#ifdef USE_HASHRATIO
+#include "driver-hashratio.h"
 #endif
 #ifdef USE_KLONDIKE
 char *opt_klondike_options = NULL;
@@ -275,7 +287,6 @@ int opt_lketc_chip_clk;
 bool opt_lketc_nocheck_golden;
 char *opt_lketc_options;
 #endif
-
 #ifdef USE_ZEUS
 bool opt_zeus_debug;
 int opt_zeus_chips_count;
@@ -287,9 +298,19 @@ static char *opt_set_null;
 #ifdef USE_MINION
 int opt_minion_chipreport;
 char *opt_minion_cores;
+bool opt_minion_extra;
 char *opt_minion_freq;
+int opt_minion_freqchange = 1000;
+int opt_minion_freqpercent = 70;
 bool opt_minion_idlecount;
+int opt_minion_ledcount;
+int opt_minion_ledlimit = 98;
+bool opt_minion_noautofreq;
 bool opt_minion_overheat;
+int opt_minion_spidelay;
+char *opt_minion_spireset;
+int opt_minion_spisleep = 200;
+int opt_minion_spiusec;
 char *opt_minion_temp;
 #endif
 
@@ -380,7 +401,7 @@ static struct pool *currentpool = NULL;
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
-static int total_urls, total_users, total_passes, total_userpasses;
+static int total_urls, total_users, total_passes, total_userpasses, total_extranonce;
 
 static
 #ifndef HAVE_CURSES
@@ -426,7 +447,7 @@ struct stratum_share {
 static struct stratum_share *stratum_shares = NULL;
 
 char *opt_socks_proxy = NULL;
-
+int opt_suggest_diff;
 static const char def_conf[] = "cgminer.conf";
 static char *default_config;
 static bool config_loaded;
@@ -698,6 +719,7 @@ struct pool *add_pool(void)
 	pool->rpc_proxy = NULL;
 	pool->quota = 1;
 	adjust_quota_gcd();
+	pool->extranonce_subscribe = false;
 
 	return pool;
 }
@@ -798,7 +820,7 @@ static char __maybe_unused *set_int_0_to_4(const char *arg, int *i)
 
 static char *set_int_1_to_1024(const char *arg, int *i)
 {
-        return set_int_range(arg, i, 1, 1024);
+	return set_int_range(arg, i, 1, 1024);
 }
 
 #ifdef USE_FPGA_SERIAL
@@ -844,7 +866,6 @@ static char *set_rr(enum pool_strategy *strategy)
  * stratum+tcp or by detecting a stratum server response */
 bool detect_stratum(struct pool *pool, char *url)
 {
-	check_extranonce_option(pool, url);
 	if (!extract_sockaddr(url, &pool->sockaddr_url, &pool->stratum_port))
 		return false;
 
@@ -892,6 +913,10 @@ static char *set_url(char *arg)
 	struct pool *pool = add_url();
 
 	setup_url(pool, arg);
+	if (strstr(pool->rpc_url, ".nicehash.com") || strstr(pool->rpc_url, "#xnsub")) {
+		pool->extranonce_subscribe = true;
+		applog(LOG_DEBUG, "Pool %d extranonce subscribing enabled.", pool->pool_no);
+	}
 	return NULL;
 }
 
@@ -975,7 +1000,22 @@ static char *set_userpass(const char *arg)
 		return "Failed to find : delimited user info";
 	pool->rpc_pass = strtok(NULL, ":");
 	if (!pool->rpc_pass)
-		return "Failed to find : delimited pass info";
+		pool->rpc_pass = strdup("");
+
+	return NULL;
+}
+
+static char *set_extranonce_subscribe(char *arg)
+{
+	struct pool *pool;
+
+	total_extranonce++;
+	if (total_extranonce > total_pools)
+		add_pool();
+
+	pool = pools[total_extranonce - 1];
+	applog(LOG_DEBUG, "Enable extranonce subscribe on %d", pool->pool_no);
+	opt_set_bool(&pool->extranonce_subscribe);
 
 	return NULL;
 }
@@ -1108,7 +1148,7 @@ static char *set_null(const char __maybe_unused *arg)
 static struct opt_table opt_config_table[] = {
 #ifdef USE_ICARUS
 	OPT_WITH_ARG("--anu-freq",
-		     set_float_125_to_500, &opt_show_intval, &opt_anu_freq,
+		     set_float_125_to_500, &opt_show_floatval, &opt_anu_freq,
 		     "Set AntminerU1 frequency in MHz, range 125-500"),
 #endif
 	OPT_WITH_ARG("--api-allow",
@@ -1144,6 +1184,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--api-port",
 		     set_int_1_to_65535, opt_show_intval, &opt_api_port,
 		     "Port number of miner API"),
+	OPT_WITH_ARG("--api-host",
+		     opt_set_charp, NULL, &opt_api_host,
+		     "Specify API listen address, default: 0.0.0.0"),
 #ifdef USE_AVALON
 	OPT_WITHOUT_ARG("--avalon-auto",
 			opt_set_bool, &opt_avalon_auto,
@@ -1167,16 +1210,22 @@ static struct opt_table opt_config_table[] = {
 #ifdef USE_AVALON2
 	OPT_WITH_CBARG("--avalon2-freq",
 		     set_avalon2_freq, NULL, &opt_set_avalon2_freq,
-		     "Set frequency range for Avalon2, single value or range"),
+		     "Set frequency range for Avalon2, single value or range, step: 25"),
+	OPT_WITH_CBARG("--avalon2-voltage",
+		     set_avalon2_voltage, NULL, &opt_set_avalon2_voltage,
+		     "Set Avalon2 core voltage, in millivolts, step: 125"),
 	OPT_WITH_CBARG("--avalon2-fan",
 		     set_avalon2_fan, NULL, &opt_set_avalon2_fan,
 		     "Set Avalon2 target fan speed"),
-	OPT_WITH_CBARG("--avalon2-voltage",
-		     set_avalon2_voltage, NULL, &opt_set_avalon2_voltage,
-		     "Set Avalon2 core voltage, in millivolts"),
 	OPT_WITH_ARG("--avalon2-cutoff",
 		     set_int_0_to_100, opt_show_intval, &opt_avalon2_overheat,
 		     "Set Avalon2 overheat cut off temperature"),
+	OPT_WITHOUT_ARG("--avalon2-fixed-speed",
+		     set_avalon2_fixed_speed, &opt_avalon2_fan_fixed,
+		     "Set Avalon2 fan to fixed speed"),
+	OPT_WITH_ARG("--avalon2-polling-delay",
+		     set_int_1_to_65535, opt_show_intval, &opt_avalon2_polling_delay,
+		     "Set Avalon2 polling delay value (ms)"),
 #endif
 #ifdef USE_BAB
 	OPT_WITH_ARG("--bab-options",
@@ -1275,10 +1324,15 @@ static struct opt_table opt_config_table[] = {
 		     set_int_0_to_100, opt_show_intval, &opt_bxm_bits,
 		     "Set BXM bits for overclocking"),
 #endif
+#ifdef USE_BLOCKERUPTER
+        OPT_WITH_ARG("--bet-clk",
+                     opt_set_intval, opt_show_intval, &opt_bet_clk,
+                     "Set Block Erupter clock"),
+#endif
 #ifdef HAVE_LIBCURL
 	OPT_WITH_ARG("--btc-address",
 		     opt_set_charp, NULL, &opt_btc_address,
-		     "Set bitcoin target address when solo mining to bitcoind (optional)"),
+		     "Set bitcoin target address when solo mining to bitcoind (mandatory)"),
 	OPT_WITH_ARG("--btc-sig",
 		     opt_set_charp, NULL, &opt_btc_sig,
 		     "Set signature to add to coinbase when solo mining (optional)"),
@@ -1316,9 +1370,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--failover-only",
 			opt_set_bool, &opt_fail_only,
 			"Don't leak work to backup pools when primary pool is lagging"),
-	OPT_WITH_ARG("--failover-switch-delay",
-		     set_int_1_to_65535, opt_show_intval, &opt_fail_switch_delay,
-		     "Seconds that a failed pool must be alive again before switching back"),
 	OPT_WITHOUT_ARG("--fix-protocol",
 			opt_set_bool, &opt_fix_protocol,
 			"Do not redirect to a different getwork protocol (eg. stratum)"),
@@ -1368,6 +1419,11 @@ static struct opt_table opt_config_table[] = {
 		     set_int_0_to_200, opt_show_intval, &opt_hfa_target,
 		     "Set the hashfast target temperature (0 to disable)"),
 #endif
+#ifdef USE_HASHRATIO
+	OPT_WITH_CBARG("--hro-freq",
+		       set_hashratio_freq, NULL, &opt_hashratio_freq,
+		       "Set the hashratio clock frequency"),
+#endif
 	OPT_WITH_ARG("--hotplug",
 		     set_int_0_to_9999, NULL, &hotplug_time,
 #ifdef USE_USBUTILS
@@ -1407,18 +1463,48 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--minion-chipreport",
 		     set_int_0_to_100, opt_show_intval, &opt_minion_chipreport,
 		     "Seconds to report chip 5min hashrate, range 0-100 (default: 0=disabled)"),
-	OPT_WITH_ARG("--minion-freq",
-		     opt_set_charp, NULL, &opt_minion_freq,
-		     "Set minion chip frequencies in MHz, single value or comma list, range 100-1400 (default: 1000)"),
 	OPT_WITH_ARG("--minion-cores",
 		     opt_set_charp, NULL, &opt_minion_cores,
 		     opt_hidden),
+	OPT_WITHOUT_ARG("--minion-extra",
+		     opt_set_bool, &opt_minion_extra,
+		     opt_hidden),
+	OPT_WITH_ARG("--minion-freq",
+		     opt_set_charp, NULL, &opt_minion_freq,
+		     "Set minion chip frequencies in MHz, single value or comma list, range 100-1400 (default: 1200)"),
+	OPT_WITH_ARG("--minion-freqchange",
+		     set_int_0_to_9999, opt_show_intval, &opt_minion_freqchange,
+		     "Millisecond total time to do frequency changes (default: 1000)"),
+	OPT_WITH_ARG("--minion-freqpercent",
+		     set_int_0_to_100, opt_show_intval, &opt_minion_freqpercent,
+		     "Percentage to use when starting up a chip (default: 70%)"),
 	OPT_WITHOUT_ARG("--minion-idlecount",
 		     opt_set_bool, &opt_minion_idlecount,
 		     "Report when IdleCount is >0 or changes"),
+	OPT_WITH_ARG("--minion-ledcount",
+		     set_int_0_to_100, opt_show_intval, &opt_minion_ledcount,
+		     "Turn off led when more than this many chips below the ledlimit (default: 0)"),
+	OPT_WITH_ARG("--minion-ledlimit",
+		     set_int_0_to_200, opt_show_intval, &opt_minion_ledlimit,
+		     "Turn off led when chips GHs are below this (default: 90)"),
+	OPT_WITHOUT_ARG("--minion-noautofreq",
+		     opt_set_bool, &opt_minion_noautofreq,
+		     "Disable automatic frequency adjustment"),
 	OPT_WITHOUT_ARG("--minion-overheat",
 		     opt_set_bool, &opt_minion_overheat,
 		     "Enable directly halting any chip when the status exceeds 100C"),
+	OPT_WITH_ARG("--minion-spidelay",
+		     set_int_0_to_9999, opt_show_intval, &opt_minion_spidelay,
+		     "Add a delay in microseconds after each SPI I/O"),
+	OPT_WITH_ARG("--minion-spireset",
+		     opt_set_charp, NULL, &opt_minion_spireset,
+		     "SPI regular reset: iNNN for I/O count or sNNN for seconds - 0 means none"),
+	OPT_WITH_ARG("--minion-spisleep",
+		     set_int_0_to_9999, opt_show_intval, &opt_minion_spisleep,
+		     "Sleep time in milliseconds when doing an SPI reset"),
+	OPT_WITH_ARG("--minion-spiusec",
+		     set_int_0_to_9999, NULL, &opt_minion_spiusec,
+		     opt_hidden),
 	OPT_WITH_ARG("--minion-temp",
 		     opt_set_charp, NULL, &opt_minion_temp,
 		     "Set minion chip temperature threshold, single value or comma list, range 120-160 (default: 135C)"),
@@ -1476,6 +1562,11 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--retry-pause",
 		     set_null, NULL, &opt_set_null,
 		     opt_hidden),
+#ifdef USE_ICARUS
+	OPT_WITH_ARG("--rock-freq",
+		     set_float_125_to_500, &opt_show_floatval, &opt_rock_freq,
+		     "Set RockMiner frequency in MHz, range 125-500"),
+#endif
 	OPT_WITH_ARG("--rotate",
 		     set_rotate, NULL, &opt_set_null,
 		     "Change multipool strategy from failover to regularly rotate at N minutes"),
@@ -1513,6 +1604,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--socks-proxy",
 		     opt_set_charp, NULL, &opt_socks_proxy,
 		     "Set socks4 proxy (host:port)"),
+	OPT_WITH_ARG("--suggest-diff",
+		     opt_set_intval, NULL, &opt_suggest_diff,
+		     "Suggest miner difficulty for pool to user (default: none)"),
 #ifdef HAVE_SYSLOG_H
 	OPT_WITHOUT_ARG("--syslog",
 			opt_set_bool, &use_syslog,
@@ -1606,6 +1700,7 @@ static char *parse_config(json_t *config, bool fileconf)
 {
 	static char err_buf[200];
 	struct opt_table *opt;
+	const char *str;
 	json_t *val;
 
 	if (fileconf && !fileconf_load)
@@ -1634,16 +1729,24 @@ static char *parse_config(json_t *config, bool fileconf)
 				continue;
 
 			if ((opt->type & (OPT_HASARG | OPT_PROCESSARG)) && json_is_string(val)) {
-				err = opt->cb_arg(json_string_value(val),
-						  opt->u.arg);
+				str = json_string_value(val);
+				err = opt->cb_arg(str, opt->u.arg);
+				if (opt->type == OPT_PROCESSARG)
+					opt_set_charp(str, opt->u.arg);
 			} else if ((opt->type & (OPT_HASARG | OPT_PROCESSARG)) && json_is_array(val)) {
-				int n, size = json_array_size(val);
+				json_t *arr_val;
+				size_t index;
 
-				for (n = 0; n < size && !err; n++) {
-					if (json_is_string(json_array_get(val, n)))
-						err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
-					else if (json_is_object(json_array_get(val, n)))
-						err = parse_config(json_array_get(val, n), false);
+				json_array_foreach(val, index, arr_val) {
+					if (json_is_string(arr_val)) {
+						str = json_string_value(arr_val);
+						err = opt->cb_arg(str, opt->u.arg);
+						if (opt->type == OPT_PROCESSARG)
+							opt_set_charp(str, opt->u.arg);
+					} else if (json_is_object(arr_val))
+						err = parse_config(arr_val, false);
+					if (err)
+						break;
 				}
 			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
 				err = opt->cb(opt->u.arg);
@@ -1715,11 +1818,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 	if (++include_count > JSON_MAX_DEPTH)
 		return JSON_MAX_DEPTH_ERR;
 
-#if JANSSON_MAJOR_VERSION > 1
 	config = json_load_file(arg, 0, &err);
-#else
-	config = json_load_file(arg, &err);
-#endif
 	if (!json_is_object(config)) {
 		siz = JSON_LOAD_ERROR_LEN + strlen(arg) + strlen(err.text);
 		json_error = malloc(siz);
@@ -1816,8 +1915,11 @@ static char *opt_verusage_and_exit(const char *extra)
 #ifdef USE_BITMINE_A1
 		"Bitmine.A1 "
 #endif
-#ifdef USE_SPONDOOLIES
+#ifdef USE_SP10
 		"spondoolies "
+#endif
+#ifdef USE_SP30
+        "sp30 "
 #endif
 #ifdef USE_GRIDSEED
 		"GridSeed "
@@ -2010,7 +2112,6 @@ static void update_gbt(struct pool *pool)
 		if (rc) {
 			applog(LOG_DEBUG, "Successfully retrieved and updated GBT from pool %u %s",
 			       pool->pool_no, pool->rpc_url);
-			cgtime(&pool->tv_idle);
 			if (pool == current_pool())
 				opt_work_update = true;
 		} else {
@@ -2222,7 +2323,7 @@ static void gbt_merkle_bins(struct pool *pool, json_t *transaction_arr)
 	memset(hashbin, 0, 32);
 	binleft = binlen / 32;
 	if (pool->transactions) {
-		int len = 1, ofs = 0;
+		int len = 0, ofs = 0;
 		const char *txn;
 
 		for (i = 0; i < pool->transactions; i++) {
@@ -3132,13 +3233,18 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 				reason[reasonLen + 2] = ')'; reason[reasonLen + 3] = '\0';
 				memcpy(disposition + 7, reasontmp, reasonLen);
 				disposition[6] = ':'; disposition[reasonLen + 7] = '\0';
-			} else if (work->stratum && err && json_is_array(err)) {
-				json_t *reason_val = json_array_get(err, 1);
-				char *reason_str;
+			} else if (work->stratum && err) {
+				if (json_is_array(err)) {
+					json_t *reason_val = json_array_get(err, 1);
+					char *reason_str;
 
-				if (reason_val && json_is_string(reason_val)) {
-					reason_str = (char *)json_string_value(reason_val);
-					snprintf(reason, 31, " (%s)", reason_str);
+					if (reason_val && json_is_string(reason_val)) {
+						reason_str = (char *)json_string_value(reason_val);
+						snprintf(reason, 31, " (%s)", reason_str);
+					}
+				} else if (json_is_string(err)) {
+					const char *s = json_string_value(err);
+					snprintf(reason, 31, " (%s)", s);
 				}
 			}
 
@@ -3156,7 +3262,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 		if (pool->seq_rejects > 10 && !work->stale && opt_disable_pool && enabled_pools > 1) {
 			double utility = total_accepted / total_secs * 60;
 
-			if (pool->seq_rejects > utility * 3) {
+			if (pool->seq_rejects > utility * 3 && enabled_pools > 1) {
 				applog(LOG_WARNING, "Pool %d rejected %d sequential shares, disabling!",
 				       pool->pool_no, pool->seq_rejects);
 				reject_pool(pool);
@@ -3275,8 +3381,7 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 		endian_flip128(work->data, work->data);
 
 		/* build hex string */
-		/* only 118 bytes are used, but *coind servers expect 128 byte hex strings */
-		hexstr = bin2hex(work->data, 128);
+		hexstr = bin2hex(work->data, 118);
 		s = strdup("{\"method\": \"getwork\", \"params\": [ \"");
 		s = realloc_strcat(s, hexstr);
 		s = realloc_strcat(s, "\" ], \"id\":1}");
@@ -3996,6 +4101,55 @@ static void _stage_work(struct work *work);
 	WORK = NULL; \
 } while (0)
 
+/* Adjust an existing char ntime field with a relative noffset */
+static void modify_ntime(char *ntime, int noffset)
+{
+	unsigned char bin[4];
+	uint32_t h32, *be32 = (uint32_t *)bin;
+
+	hex2bin(bin, ntime, 4);
+	h32 = be32toh(*be32) + noffset;
+	*be32 = htobe32(h32);
+	__bin2hex(ntime, bin, 4);
+}
+
+void roll_work(struct work *work)
+{
+	uint32_t *work_ntime;
+	uint32_t ntime;
+
+	work_ntime = (uint32_t *)(work->data + 68);
+	ntime = be32toh(*work_ntime);
+	ntime++;
+	*work_ntime = htobe32(ntime);
+	local_work++;
+	work->rolls++;
+	work->nonce = 0;
+	applog(LOG_DEBUG, "Successfully rolled work");
+	/* Change the ntime field if this is stratum work */
+	if (work->ntime)
+		modify_ntime(work->ntime, 1);
+
+	/* This is now a different work item so it needs a different ID for the
+	 * hashtable */
+	work->id = total_work_inc();
+}
+
+struct work *make_clone(struct work *work)
+{
+	struct work *work_clone = copy_work(work);
+
+	work_clone->clone = true;
+	cgtime((struct timeval *)&(work_clone->tv_cloned));
+	work_clone->longpoll = false;
+	work_clone->mandatory = false;
+	/* Make cloned work appear slightly older to bias towards keeping the
+	 * master work item which can be further rolled */
+	work_clone->tv_staged.tv_sec -= 1;
+
+	return work_clone;
+}
+
 #ifdef HAVE_LIBCURL
 /* Called with pool_lock held. Recruit an extra curl if none are available for
  * this pool. */
@@ -4090,40 +4244,6 @@ static inline bool can_roll(struct work *work)
 		work->rolls < 7000 && !stale_work(work, false));
 }
 
-/* Adjust an existing char ntime field with a relative noffset */
-static void modify_ntime(char *ntime, int noffset)
-{
-	unsigned char bin[4];
-	uint32_t h32, *be32 = (uint32_t *)bin;
-
-	hex2bin(bin, ntime, 4);
-	h32 = be32toh(*be32) + noffset;
-	*be32 = htobe32(h32);
-	__bin2hex(ntime, bin, 4);
-}
-
-void roll_work(struct work *work)
-{
-	uint32_t *work_ntime;
-	uint32_t ntime;
-
-	work_ntime = (uint32_t *)(work->data + 68);
-	ntime = be32toh(*work_ntime);
-	ntime++;
-	*work_ntime = htobe32(ntime);
-	local_work++;
-	work->rolls++;
-	work->nonce = 0;
-	applog(LOG_DEBUG, "Successfully rolled work");
-	/* Change the ntime field if this is stratum work */
-	if (work->ntime)
-		modify_ntime(work->ntime, 1);
-
-	/* This is now a different work item so it needs a different ID for the
-	 * hashtable */
-	work->id = total_work_inc();
-}
-
 static void *submit_work_thread(void *userdata)
 {
 	struct work *work = (struct work *)userdata;
@@ -4165,21 +4285,6 @@ static void *submit_work_thread(void *userdata)
 	push_curl_entry(ce, pool);
 
 	return NULL;
-}
-
-struct work *make_clone(struct work *work)
-{
-	struct work *work_clone = copy_work(work);
-
-	work_clone->clone = true;
-	cgtime((struct timeval *)&(work_clone->tv_cloned));
-	work_clone->longpoll = false;
-	work_clone->mandatory = false;
-	/* Make cloned work appear slightly older to bias towards keeping the
-	 * master work item which can be further rolled */
-	work_clone->tv_staged.tv_sec -= 1;
-
-	return work_clone;
 }
 
 static bool clone_available(void)
@@ -4330,17 +4435,7 @@ struct work *copy_work_noffset(struct work *base_work, int noffset)
 	return work;
 }
 
-void pool_failed(struct pool *pool)
-{
-	if (!pool_tset(pool, &pool->idle)) {
-		cgtime(&pool->tv_idle);
-		if (pool == current_pool()) {
-			switch_pools(NULL);
-		}
-	}
-}
-
-static void pool_died(struct pool *pool)
+void pool_died(struct pool *pool)
 {
 	if (!pool_tset(pool, &pool->idle)) {
 		cgtime(&pool->tv_idle);
@@ -5067,7 +5162,7 @@ void write_config(FILE *fcfg)
 	/* Write pool values */
 	fputs("{\n\"pools\" : [", fcfg);
 	for(i = 0; i < total_pools; i++) {
-		struct pool *pool = pools[i];
+		struct pool *pool = priority_pool(i);
 
 		if (pool->quota != 1) {
 			fprintf(fcfg, "%s\n\t{\n\t\t\"quota\" : \"%s%s%s%d;%s\",", i > 0 ? "," : "",
@@ -5083,6 +5178,8 @@ void write_config(FILE *fcfg)
 				pool->rpc_proxy ? "|" : "",
 				json_escape(pool->rpc_url));
 		}
+		if (pool->extranonce_subscribe)
+			fputs("\n\t\t\"extranonce-subscribe\" : true,", fcfg);
 		fprintf(fcfg, "\n\t\t\"user\" : \"%s\",", json_escape(pool->rpc_user));
 		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\"\n\t}", json_escape(pool->rpc_pass));
 		}
@@ -5115,6 +5212,7 @@ void write_config(FILE *fcfg)
 			     (void *)opt->cb_arg == (void *)set_int_0_to_100 ||
 			     (void *)opt->cb_arg == (void *)set_int_0_to_255 ||
 			     (void *)opt->cb_arg == (void *)set_int_0_to_200 ||
+			     (void *)opt->cb_arg == (void *)set_int_0_to_4 ||
 			     (void *)opt->cb_arg == (void *)set_int_32_to_63 ||
 			     (void *)opt->cb_arg == (void *)set_int_1_to_1024)) {
 				fprintf(fcfg, ",\n\"%s\" : \"%d\"", p+2, *(int *)opt->u.arg);
@@ -5920,10 +6018,10 @@ static void thread_reportout(struct thr_info *thr)
 	thr->cgpu->device_last_well = time(NULL);
 }
 
-static void hashmeter(int thr_id, double hashes_done)
+static void hashmeter(int thr_id, uint64_t hashes_done)
 {
 	bool showlog = false;
-	double tv_tdiff;
+	double tv_tdiff, mhashes_done = 0.0;
 	time_t now_t;
 	int diff_t;
 
@@ -5954,16 +6052,16 @@ static void hashmeter(int thr_id, double hashes_done)
 		device_tdiff = tdiff(&total_tv_end, &cgpu->last_message_tv);
 		copy_time(&cgpu->last_message_tv, &total_tv_end);
 		thr_mhs = (double)hashes_done / device_tdiff / 1000000;
-		applog(LOG_DEBUG, "[thread %d: %.0f hashes, %.1f mhash/sec]",
+		applog(LOG_DEBUG, "[thread %d: %"PRIu64" hashes, %.1f mhash/sec]",
 		       thr_id, hashes_done, thr_mhs);
-		hashes_done /= 1000000;
+		mhashes_done = hashes_done / 1000000.0;
 
 		mutex_lock(&hash_lock);
-		cgpu->total_mhashes += hashes_done;
-		decay_time(&cgpu->rolling, hashes_done, device_tdiff, opt_log_interval);
-		decay_time(&cgpu->rolling1, hashes_done, device_tdiff, 60.0);
-		decay_time(&cgpu->rolling5, hashes_done, device_tdiff, 300.0);
-		decay_time(&cgpu->rolling15, hashes_done, device_tdiff, 900.0);
+		cgpu->total_mhashes += mhashes_done;
+		decay_time(&cgpu->rolling, mhashes_done, device_tdiff, opt_log_interval);
+		decay_time(&cgpu->rolling1, mhashes_done, device_tdiff, 60.0);
+		decay_time(&cgpu->rolling5, mhashes_done, device_tdiff, 300.0);
+		decay_time(&cgpu->rolling15, mhashes_done, device_tdiff, 900.0);
 		mutex_unlock(&hash_lock);
 
 		if (want_per_device_stats && showlog) {
@@ -5995,16 +6093,12 @@ static void hashmeter(int thr_id, double hashes_done)
 	}
 
 	mutex_lock(&hash_lock);
-	total_mhashes_done += hashes_done;
-	decay_time(&total_rolling, hashes_done, tv_tdiff, opt_log_interval);
-	decay_time(&rolling1, hashes_done, tv_tdiff, 60.0);
-	decay_time(&rolling5, hashes_done, tv_tdiff, 300.0);
-	decay_time(&rolling15, hashes_done, tv_tdiff, 900.0);
-#ifndef WIN32
+	total_mhashes_done += mhashes_done;
+	decay_time(&total_rolling, mhashes_done, tv_tdiff, opt_log_interval);
+	decay_time(&rolling1, mhashes_done, tv_tdiff, 60.0);
+	decay_time(&rolling5, mhashes_done, tv_tdiff, 300.0);
+	decay_time(&rolling15, mhashes_done, tv_tdiff, 900.0);
 	global_hashrate = llround(total_rolling) * 1000000;
-#else
-	global_hashrate = (unsigned long long)lround(total_rolling) * 1000000;  // MinGW(non64) is missing llround
-#endif
 	total_secs = tdiff(&total_tv_end, &total_tv_start);
 	if (showlog) {
 		char displayed_hashes[16], displayed_rolling[16];
@@ -6072,6 +6166,8 @@ static bool parse_stratum_response(struct pool *pool, char *s)
 	}
 
 	res_val = json_object_get(val, "result");
+	if (!res_val)
+		goto out;
 	err_val = json_object_get(val, "error");
 	id_val = json_object_get(val, "id");
 
@@ -6237,8 +6333,6 @@ static bool cnx_needed(struct pool *pool)
 	 * it. */
 	if (pool_strategy == POOL_FAILOVER && pool->prio < cp_prio())
 		return true;
-	if (pool_unworkable(cp))
-		return true;
 	/* We've run out of work, bring anything back to life. */
 	if (no_work)
 		return true;
@@ -6249,10 +6343,8 @@ static void wait_lpcurrent(struct pool *pool);
 static void pool_resus(struct pool *pool);
 static void gen_stratum_work(struct pool *pool, struct work *work);
 
-static void stratum_resumed(struct pool *pool)
+void stratum_resumed(struct pool *pool)
 {
-	if (!pool->stratum_notify)
-		return;
 	if (pool_tclear(pool, &pool->idle)) {
 		applog(LOG_INFO, "Stratum connection to pool %d resumed", pool->pool_no);
 		pool_resus(pool);
@@ -6290,8 +6382,10 @@ static void *stratum_rthread(void *userdata)
 		fd_set rd;
 		char *s;
 
-		if (unlikely(pool->removed))
+		if (unlikely(pool->removed)) {
+			suspend_stratum(pool);
 			break;
+		}
 
 		/* Check to see whether we need to maintain this connection
 		 * indefinitely or just bring it up when we switch to this
@@ -6302,14 +6396,13 @@ static void *stratum_rthread(void *userdata)
 			clear_pool_work(pool);
 
 			wait_lpcurrent(pool);
-			if (!restart_stratum(pool)) {
-				pool_died(pool);
-				while (!restart_stratum(pool)) {
-					pool_failed(pool);
-					if (pool->removed)
-						goto out;
+			while (!restart_stratum(pool)) {
+				if (pool->removed)
+					goto out;
+				if (enabled_pools > 1)
 					cgsleep_ms(30000);
-				}
+				else
+					cgsleep_ms(3000);
 			}
 		}
 
@@ -6341,17 +6434,11 @@ static void *stratum_rthread(void *userdata)
 			if (pool == current_pool())
 				restart_threads();
 
-			if (restart_stratum(pool))
-				continue;
-
-			pool_died(pool);
 			while (!restart_stratum(pool)) {
-				pool_failed(pool);
 				if (pool->removed)
 					goto out;
 				cgsleep_ms(30000);
 			}
-			stratum_resumed(pool);
 			continue;
 		}
 
@@ -6456,14 +6543,13 @@ static void *stratum_sthread(void *userdata)
 			bool sessionid_match;
 
 			if (likely(stratum_send(pool, s, strlen(s)))) {
-				if (pool_tclear(pool, &pool->submit_fail))
-						applog(LOG_WARNING, "Pool %d communication resumed, submitting work", pool->pool_no);
-
 				mutex_lock(&sshare_lock);
 				HASH_ADD_INT(stratum_shares, id, sshare);
 				pool->sshares++;
 				mutex_unlock(&sshare_lock);
 
+				if (pool_tclear(pool, &pool->submit_fail))
+						applog(LOG_WARNING, "Pool %d communication resumed, submitting work", pool->pool_no);
 				applog(LOG_DEBUG, "Successfully submitted, adding to stratum_shares db");
 				submitted = true;
 				break;
@@ -6531,7 +6617,6 @@ static void *longpoll_thread(void *userdata);
 static bool stratum_works(struct pool *pool)
 {
 	applog(LOG_INFO, "Testing pool %d stratum %s", pool->pool_no, pool->stratum_url);
-	check_extranonce_option(pool, pool->stratum_url);
 	if (!extract_sockaddr(pool->stratum_url, &pool->sockaddr_url, &pool->stratum_port))
 		return false;
 
@@ -6638,9 +6723,7 @@ retry_stratum:
 		bool init = pool_tset(pool, &pool->stratum_init);
 
 		if (!init) {
-			bool ret = initiate_stratum(pool) && auth_stratum(pool);
-
-			extranonce_subscribe_stratum(pool);
+			bool ret = initiate_stratum(pool) && (!pool->extranonce_subscribe || subscribe_extranonce(pool)) && auth_stratum(pool);
 			if (ret)
 				init_stratum_threads(pool);
 			else
@@ -6658,11 +6741,11 @@ retry_stratum:
 
 	/* Probe for GBT support on first pass */
 	if (!pool->probed) {
-		bool append = false, submit = false, transactions = false;
 		applog(LOG_DEBUG, "Probing for GBT support");
 		val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass,
 				    gbt_req, true, false, &rolltime, pool, false);
 		if (val) {
+			bool append = false, submit = false, transactions = false;
 			json_t *res_val, *mutables;
 			int i, mutsize = 0;
 
@@ -6693,7 +6776,7 @@ retry_stratum:
 			if (append && submit) {
 				pool->has_gbt = true;
 				pool->rpc_req = gbt_req;
-			} else if (transactions && opt_btc_address) {
+			} else if (transactions) {
 				pool->gbt_solo = true;
 				pool->rpc_req = gbt_solo_req;
 			}
@@ -6706,8 +6789,6 @@ retry_stratum:
 			applog(LOG_DEBUG, "GBT coinbase + append support found, switching to GBT protocol");
 		else if (pool->gbt_solo)
 			applog(LOG_DEBUG, "GBT coinbase without append found, switching to GBT solo protocol");
-		else if (transactions)
-			applog(LOG_DEBUG, "GBT found but no target address specified, falling back to getwork protocol");
 		else
 			applog(LOG_DEBUG, "No GBT coinbase + append support found, using getwork protocol");
 	}
@@ -6756,7 +6837,6 @@ retry_stratum:
 			total_getworks++;
 			pool->getwork_requested++;
 			ret = true;
-			cgtime(&pool->tv_idle);
 		} else {
 			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher work from pool %u %s",
 			       pool->pool_no, pool->rpc_url);
@@ -6958,20 +7038,34 @@ void set_target(unsigned char *dest_target, double diff)
 	memcpy(dest_target, target, 32);
 }
 
-#ifdef USE_AVALON2
-void submit_nonce2_nonce(struct thr_info *thr, uint32_t pool_no, uint32_t nonce2, uint32_t nonce)
+#if defined (USE_AVALON2) || defined (USE_HASHRATIO)
+bool submit_nonce2_nonce(struct thr_info *thr, struct pool *pool, struct pool *real_pool,
+			 uint32_t nonce2, uint32_t nonce)
 {
+	const int thr_id = thr->id;
 	struct cgpu_info *cgpu = thr->cgpu;
 	struct device_drv *drv = cgpu->drv;
-
-	struct pool *pool = pools[pool_no];
 	struct work *work = make_work();
+	bool ret;
 
+	cg_wlock(&pool->data_lock);
 	pool->nonce2 = nonce2;
-	gen_stratum_work(pool, work);
+	cg_wunlock(&pool->data_lock);
 
-	submit_nonce(thr, work, nonce);
+	gen_stratum_work(pool, work);
+	work->pool = real_pool;
+
+	work->thr_id = thr_id;
+	work->work_block = work_block;
+	work->pool->works++;
+
+	work->mined = true;
+	work->device_diff = MIN(drv->max_diff, work->work_difficulty);
+	work->device_diff = MAX(drv->min_diff, work->device_diff);
+
+	ret = submit_nonce(thr, work, nonce);
 	free_work(work);
+	return ret;
 }
 #endif
 
@@ -7249,6 +7343,7 @@ struct work *get_work(struct thr_info *thr, const int thr_id)
 	thread_reportin(thr);
 	work->mined = true;
 	work->device_diff = MIN(cgpu->drv->max_diff, work->work_difficulty);
+	work->device_diff = MAX(cgpu->drv->min_diff, work->device_diff);
 	return work;
 }
 
@@ -7504,8 +7599,8 @@ static void hash_sole_work(struct thr_info *mythr)
 				"mining thread %d", thr_id);
 			break;
 		}
-
 		work->device_diff = MIN(drv->max_diff, work->work_difficulty);
+		work->device_diff = MAX(drv->min_diff, work->device_diff);
 
 		do {
 			cgtime(&tv_start);
@@ -7659,23 +7754,32 @@ void __add_queued(struct cgpu_info *cgpu, struct work *work)
 	HASH_ADD_INT(cgpu->queued_work, id, work);
 }
 
+struct work *__get_queued(struct cgpu_info *cgpu)
+{
+	struct work *work = NULL;
+
+	if (cgpu->unqueued_work) {
+		work = cgpu->unqueued_work;
+		if (unlikely(stale_work(work, false))) {
+			discard_work(work);
+		} else
+			__add_queued(cgpu, work);
+		cgpu->unqueued_work = NULL;
+		wake_gws();
+	}
+
+	return work;
+}
+
 /* This function is for retrieving one work item from the unqueued pointer and
  * adding it to the hashtable of queued work. Code using this function must be
  * able to handle NULL as a return which implies there is no work available. */
 struct work *get_queued(struct cgpu_info *cgpu)
 {
-	struct work *work = NULL;
+	struct work *work;
 
 	wr_lock(&cgpu->qlock);
-	if (cgpu->unqueued_work) {
-		work = cgpu->unqueued_work;
-		if (unlikely(stale_work(work, false))) {
-			discard_work(work);
-			wake_gws();
-		} else
-			__add_queued(cgpu, work);
-		cgpu->unqueued_work = NULL;
-	}
+	work = __get_queued(cgpu);
 	wr_unlock(&cgpu->qlock);
 
 	return work;
@@ -7920,17 +8024,13 @@ void hash_driver_work(struct thr_info *mythr)
 		struct timeval diff;
 		int64_t hashes;
 
-#ifndef USE_AVALON2
 		mythr->work_update = false;
-#endif
 
 		hashes = drv->scanwork(mythr);
 
-#ifndef USE_AVALON2
 		/* Reset the bool here in case the driver looks for it
 		 * synchronously in the scanwork loop. */
 		mythr->work_restart = false;
-#endif
 
 		if (unlikely(hashes == -1 )) {
 			applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
@@ -8390,27 +8490,26 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			if (pool->enabled == POOL_DISABLED)
 				continue;
 
-			/* Don't start testing any pools if the test threads
-			 * from startup are still doing their first attempt. */
-			if (unlikely(pool->testing)) {
-				pthread_join(pool->test_thread, NULL);
-				pool->testing = false;
-			}
+			/* Don't start testing a pool if its test thread
+			 * from startup is still doing its first attempt. */
+			if (unlikely(pool->testing))
+				continue;
 
 			/* Test pool is idle once every minute */
 			if (pool->idle && now.tv_sec - pool->tv_idle.tv_sec > 30) {
-				cgtime(&pool->tv_idle);
 				if (pool_active(pool, true) && pool_tclear(pool, &pool->idle))
 					pool_resus(pool);
+				else
+					cgtime(&pool->tv_idle);
 			}
 
 			/* Only switch pools if the failback pool has been
-			 * alive for more than 5 minutes (default) to prevent
+			 * alive for more than 5 minutes to prevent
 			 * intermittently failing pools from being used. */
 			if (!pool->idle && pool_strategy == POOL_FAILOVER && pool->prio < cp_prio() &&
-			    now.tv_sec - pool->tv_idle.tv_sec > opt_fail_switch_delay) {
-				applog(LOG_WARNING, "Pool %d %s stable for %d seconds",
-				       pool->pool_no, pool->rpc_url, opt_fail_switch_delay);
+			    now.tv_sec - pool->tv_idle.tv_sec > 300) {
+				applog(LOG_WARNING, "Pool %d %s stable for 5 mins",
+				       pool->pool_no, pool->rpc_url);
 				switch_pools(NULL);
 			}
 		}
@@ -8770,6 +8869,8 @@ static void *test_pool_thread(void *arg)
 {
 	struct pool *pool = (struct pool *)arg;
 
+	if (!pool->blocking)
+		pthread_detach(pthread_self());
 retry:
 	if (pool_active(pool, false)) {
 		pool_tset(pool, &pool->lagging);
@@ -8796,6 +8897,8 @@ retry:
 		goto retry;
 	}
 
+	pool->testing = false;
+
 	return NULL;
 }
 
@@ -8819,12 +8922,12 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 
 	pool->testing = true;
 	pool->idle = true;
+	pool->blocking = !live;
 	enable_pool(pool);
 
 	pthread_create(&pool->test_thread, NULL, test_pool_thread, (void *)pool);
 	if (!live) {
 		pthread_join(pool->test_thread, NULL);
-		pool->testing = false;
 		return pools_active;
 	}
 	return true;
@@ -8841,16 +8944,18 @@ static bool input_pool(bool live)
 	wlogprint("Input server details.\n");
 
 	url = curses_input("URL");
-	if (!url)
+	if (!strcmp(url, "-1"))
 		goto out;
 
 	user = curses_input("Username");
-	if (!user)
+	if (!strcmp(user, "-1"))
 		goto out;
 
 	pass = curses_input("Password");
-	if (!pass)
-		goto out;
+	if (!strcmp(pass, "-1")) {
+		free(pass);
+		pass = strdup("");
+	}
 
 	pool = add_pool();
 
@@ -8872,12 +8977,9 @@ out:
 	immedok(logwin, false);
 
 	if (!ret) {
-		if (url)
-			free(url);
-		if (user)
-			free(user);
-		if (pass)
-			free(pass);
+		free(url);
+		free(user);
+		free(pass);
 	}
 	return ret;
 }
@@ -9091,6 +9193,8 @@ void fill_device_drv(struct device_drv *drv)
 		drv->queue_full = &noop_queue_full;
 	if (!drv->zero_stats)
 		drv->zero_stats = &noop_zero_stats;
+	/* If drivers support internal diff they should set a max_diff or
+	 * we will assume they don't and set max to 1. */
 	if (!drv->max_diff)
 		drv->max_diff = 1;
 }
@@ -9128,6 +9232,7 @@ void null_device_drv(struct device_drv *drv)
 
 	drv->zero_stats = &noop_zero_stats;
 	drv->max_diff = 1;
+	drv->min_diff = 1;
 }
 
 void enable_device(struct cgpu_info *cgpu)
@@ -9158,6 +9263,20 @@ static void adjust_mostdevs(void)
 	if (total_devices - zombie_devs > most_devices)
 		most_devices = total_devices - zombie_devs;
 }
+
+#ifdef USE_ICARUS
+bool icarus_get_device_id(struct cgpu_info *cgpu)
+{
+	static struct _cgpu_devid_counter *devids = NULL;
+	struct _cgpu_devid_counter *d;
+
+	HASH_FIND_STR(devids, cgpu->drv->name, d);
+	if (d)
+		return (d->lastid + 1);
+	else
+		return 0;
+}
+#endif
 
 bool add_cgpu(struct cgpu_info *cgpu)
 {
@@ -9387,6 +9506,14 @@ int main(int argc, char *argv[])
 	if (unlikely(curl_global_init(CURL_GLOBAL_ALL)))
 		early_quit(1, "Failed to curl_global_init");
 
+# ifdef __linux
+	/* If we're on a small lowspec platform with only one CPU, we should
+	 * yield after dropping a lock to allow a thread waiting for it to be
+	 * able to get CPU time to grab the lock. */
+	if (sysconf(_SC_NPROCESSORS_ONLN) == 1)
+		selective_yield = &sched_yield;
+#endif
+
 #if LOCK_TRACKING
 	// Must be first
 	if (unlikely(pthread_mutex_init(&lockstat_lock, NULL)))
@@ -9494,6 +9621,10 @@ int main(int argc, char *argv[])
 			strcpy(pool->rpc_url, "Benchmark");
 		pool->rpc_user = pool->rpc_url;
 		pool->rpc_pass = pool->rpc_url;
+		pool->rpc_userpass = pool->rpc_url;
+		pool->sockaddr_url = pool->rpc_url;
+		strncpy(pool->diff, "?", sizeof(pool->diff)-1);
+		pool->diff[sizeof(pool->diff)-1] = '\0';
 		enable_pool(pool);
 		pool->idle = false;
 		successful_connect = true;
@@ -9627,7 +9758,9 @@ int main(int argc, char *argv[])
 		pool->cgminer_pool_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
 
 		if (!pool->rpc_userpass) {
-			if (!pool->rpc_user || !pool->rpc_pass)
+			if (!pool->rpc_pass)
+				pool->rpc_pass = strdup("");
+			if (!pool->rpc_user)
 				early_quit(1, "No login credentials supplied for pool %u %s", i, pool->rpc_url);
 			siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
 			pool->rpc_userpass = malloc(siz);

@@ -3,7 +3,6 @@
 
 #include <semaphore.h>
 
-
 #if defined(unix) || defined(__APPLE__)
 	#include <errno.h>
 	#include <sys/socket.h>
@@ -15,6 +14,7 @@
 	#define INVSOCK -1
 	#define INVINETADDR -1
 	#define CLOSESOCKET close
+	#define INET_PTON inet_pton
 
 	#define SOCKERRMSG strerror(errno)
 	static inline bool sock_blocks(void)
@@ -38,6 +38,9 @@
 	#define INVSOCK INVALID_SOCKET
 	#define INVINETADDR INADDR_NONE
 	#define CLOSESOCKET closesocket
+
+	int Inet_Pton(int af, const char *src, void *dst);
+	#define INET_PTON Inet_Pton
 
 	extern char *WSAErrorMsg(void);
 	#define SOCKERRMSG WSAErrorMsg()
@@ -65,11 +68,7 @@
 	#endif
 #endif
 
-#if JANSSON_MAJOR_VERSION >= 2
 #define JSON_LOADS(str, err_ptr) json_loads((str), 0, (err_ptr))
-#else
-#define JSON_LOADS(str, err_ptr) json_loads((str), (err_ptr))
-#endif
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
@@ -103,6 +102,8 @@ typedef LARGE_INTEGER cgtimer_t;
 typedef struct timespec cgtimer_t;
 #endif
 
+int no_yield(void);
+int (*selective_yield)(void);
 struct thr_info;
 struct pool;
 enum dev_reason;
@@ -125,6 +126,8 @@ void us_to_timeval(struct timeval *val, int64_t us);
 void us_to_timespec(struct timespec *spec, int64_t us);
 void ms_to_timespec(struct timespec *spec, int64_t ms);
 void timeraddspec(struct timespec *a, const struct timespec *b);
+char *Strcasestr(char *haystack, const char *needle);
+char *Strsep(char **stringp, const char *delim);
 void cgsleep_ms(int ms);
 void cgsleep_us(int64_t us);
 void cgtimer_time(cgtimer_t *ts_start);
@@ -142,9 +145,9 @@ void _recalloc(void **ptr, size_t old, size_t new, const char *file, const char 
 #define recalloc(ptr, old, new) _recalloc((void *)&(ptr), old, new, __FILE__, __func__, __LINE__)
 char *recv_line(struct pool *pool);
 bool parse_method(struct pool *pool, char *s);
-void check_extranonce_option(struct pool *pool, char * url);
 bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port);
-void extranonce_subscribe_stratum(struct pool *pool);
+bool subscribe_extranonce(struct pool *pool);
+//void extranonce_subscribe_stratum(struct pool *pool);
 bool auth_stratum(struct pool *pool);
 bool initiate_stratum(struct pool *pool);
 bool restart_stratum(struct pool *pool);
