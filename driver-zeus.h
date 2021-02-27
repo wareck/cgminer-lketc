@@ -19,7 +19,7 @@
 #define ZEUS_EVENT_PKT_LEN		4
 
 #define ZEUS_CLK_MAX			382	// 0xff * 3/2
-#define ZEUS_CLK_MIN			2
+#define ZEUS_CLK_MIN			328
 
 #define ZEUS_USB_ID_MODEL_STR1		"CP2102_USB_to_UART_Bridge_Controller"
 #define ZEUS_USB_ID_MODEL_STR2		"FT232R_USB_UART"
