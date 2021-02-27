@@ -20,7 +20,7 @@
 #define LKETC_READ_BUFFER		LKETC_EVENT_PKT_LEN + 2	// 2 = max value of read_data_offset; allows 2 extra FTDI status bytes
 
 #define LKETC_CLK_MAX			329	// 0xff * 3/2
-#define LKETC_CLK_MIN			180
+#define LKETC_CLK_MIN			290
 
 #define LKETC_USB_ID_MODEL_STR1		"CP2103_USB_to_UART_Bridge_Controller"
 #define LKETC_USB_ID_MODEL_STR2		"FT232R_USB_UART"
