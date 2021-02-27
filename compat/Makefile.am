@@ -1,5 +1,5 @@
 
-SUBDIRS	= jansson-2.6
+SUBDIRS	= jansson-2.9
 
 if WANT_USBUTILS
 if WANT_STATIC_LIBUSB

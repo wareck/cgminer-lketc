@@ -119,10 +119,10 @@ if test "x$has_winpthread" != xtrue; then
         PTHREAD_LIBS=-lpthread
 fi
 
-scrypt="no"
+scrypt="yes"
 
 AC_ARG_ENABLE([scrypt],
-	[AC_HELP_STRING([--enable-scrypt],[Compile support for scrypt mining (default disabled)])],
+	[AC_HELP_STRING([--enable-scrypt],[Compile support for scrypt mining (default enabled)])],
 	[scrypt=$enableval]
 	)
 if test "x$scrypt" = xyes; then
@@ -416,10 +416,10 @@ fi
 AM_CONDITIONAL([HAS_SP30], [test x$sp30 = xyes])
 
 
-gridseed="no"
+gridseed="yes"
 
 AC_ARG_ENABLE([gridseed],
-	[AC_HELP_STRING([--enable-gridseed],[Compile support for GridSeed (default disabled)])],
+	[AC_HELP_STRING([--enable-gridseed],[Compile support for GridSeed (default enabled)])],
 	[gridseed=$enableval]
 	)
 if test "x$gridseed" = xyes; then
@@ -431,10 +431,10 @@ AM_CONDITIONAL([HAS_GRIDSEED], [test x$gridseed = xyes])
 
 
 
-zeus="no"
+zeus="yes"
 
 AC_ARG_ENABLE([zeus],
-	[AC_HELP_STRING([--enable-zeus],[Compile support for Zeusminer (default disabled) (EXPERIMENTAL)])],
+	[AC_HELP_STRING([--enable-zeus],[Compile support for Zeusminer (default enabled)])],
 	[zeus=$enableval]
 	)
 if test "x$zeus" = xyes; then
@@ -444,10 +444,10 @@ if test "x$zeus" = xyes; then
 fi
 AM_CONDITIONAL([HAS_ZEUS], [test x$zeus = xyes])
 
-lketc="no"
+lketc="yes"
 
 AC_ARG_ENABLE([lketc],
-        [AC_HELP_STRING([--enable-lketc],[Compile support for Lketcminer (default disabled)])],
+        [AC_HELP_STRING([--enable-lketc],[Compile support for Lketcminer (default enabled)])],
         [lketc=$enableval]
         )
 if test "x$lketc" = xyes; then
@@ -565,8 +565,8 @@ fi
 
 AM_CONDITIONAL([WANT_STATIC_LIBUSB], [test x$dlibusb = xno])
 
-AC_CONFIG_SUBDIRS([compat/jansson-2.6])
-JANSSON_LIBS="compat/jansson-2.6/src/.libs/libjansson.a"
+AC_CONFIG_SUBDIRS([compat/jansson-2.9])
+JANSSON_LIBS="compat/jansson-2.9/src/.libs/libjansson.a"
 
 PKG_PROG_PKG_CONFIG()
 
