@@ -1,4 +1,4 @@
-cgminer-scrypt-2 + lketc support
+cgminer-scrypt + lketc support
 ================================
 
 CGMiner 4.7.0 with GridSeed, Zeus and Lketc scrypt ASIC support.
@@ -23,7 +23,7 @@ to build this specific code:
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
 	libjansson-dev libncurses5-dev git
 	./autogen.sh
-	./configure --enable-scrypt --enable-lketc
+	./configure
 	make
 
 ### Option Summary ###
