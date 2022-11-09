@@ -1,0 +1,44 @@
+utf.lo: utf.c /opt/mxe/usr/i686-w64-mingw32.static/include/string.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h utf.h \
+ ../jansson_private_config.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/string.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h:
+
+utf.h:
+
+../jansson_private_config.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h:

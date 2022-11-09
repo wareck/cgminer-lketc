@@ -1,0 +1,67 @@
+opt/libccan_a-parse.o: opt/parse.c ../ccan/opt/opt.h \
+ ../ccan/compiler/compiler.h ../config.h \
+ ../ccan/typesafe_cb/typesafe_cb.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdbool.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/limits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/string.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/assert.h opt/private.h
+
+../ccan/opt/opt.h:
+
+../ccan/compiler/compiler.h:
+
+../config.h:
+
+../ccan/typesafe_cb/typesafe_cb.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdbool.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/limits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/string.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/assert.h:
+
+opt/private.h:

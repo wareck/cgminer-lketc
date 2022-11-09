@@ -1,0 +1,52 @@
+cgminer-scrypt
+==============
+
+CGMiner 4.3.5 with GridSeed, Zeus and Lketc scrypt ASIC support.
+
+This file describes Scrypt-specific settings and options.
+
+For general CGMiner information refer to README.
+
+Scrypt algorithm code was ported from CGMiner version 3.7.2.
+
+## LKETC usb miner ##
+This code is forked from original cgminer-dmaxl-zeus.
+
+I made a custom driver for LKETC usb miner that you can find on ebay, like this:
+![Extended Canvas Screenshot](http://farman-aeromodelisme.fr/hors_site/lketc.jpg)
+
+My code is base on Zeus scrypt Asic, but I made some changes to enable possibility to use Zeus and LKETC as same time (with tuning for each kind of miner)
+
+to build this specific code:
+
+	./autogen.sh
+	./configure --enable-scrypt --enable-zeus
+	make
+
+### Option Summary ###
+
+```
+  --lketc-clock <clock>   Default chip clock speed (MHz)
+  --lketc-options <ID>,<chips>,<clock>[;<ID>,<chips>,<clock>...]
+                         Set chips and clock speed for individual devices
+
+  --lketc-nocheck-golden  Skip golden nonce verification during initialization (serial mode only)
+  --lketc-debug           Enable extra Lketc driver debugging output in verbose mode
+```
+
+The following three examples are equivalent assuming two miners are connected:
+
+	# Using libusb
+	./cgminer --scrypt --lketc-clock 280
+	
+	# Direct serial I/O, manual port specification
+	./cgminer --scrypt --lketc-clock 280 --scan-serial /dev/ttyUSB0 \
+		--scan-serial /dev/ttyUSB1 --scan-serial /dev/ttyUSB2
+	
+	# Direct serial I/O, auto-detect ports (Linux only)
+	./cgminer --scrypt --lektc-clock 280 --scan-serial lketc:auto
+
+Exemple If you use Lketc and a Gaw Fury :
+
+	./cgminer --scrypt --lketc-clock 280 --zeus-chips 6 --zeus-clock 328
+

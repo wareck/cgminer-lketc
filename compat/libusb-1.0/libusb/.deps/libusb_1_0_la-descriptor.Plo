@@ -1,0 +1,539 @@
+libusb_1_0_la-descriptor.lo: descriptor.c \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/errno.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/limits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/string.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdio.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_stdio_config.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_off_t.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/swprintf.inl \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdio_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/assert.h libusbi.h \
+ ../config.h /opt/mxe/usr/i686-w64-mingw32.static/include/time.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_timeval.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sys/timeb.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/sys/timeb_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pthread_time.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdarg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdarg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_stdarg.h libusb.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sys/types.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/windows.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sdkddkver.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/excpt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/windef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winapifamily.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/minwindef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/specstrings.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sal.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/concurrencysal.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/driverspecs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winnt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_unicode.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ctype.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/apiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/intrin-impl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/basetsd.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/guiddef.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/emmintrin.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/xmmintrin.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/mmintrin.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/mm_malloc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack4.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/poppack.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack4.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack2.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/poppack.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack2.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack8.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack8.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ktmtypes.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/apisetcconv.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/minwinbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/bemapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/debugapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/errhandlingapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/fibersapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/fileapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/handleapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/heapapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ioapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/interlockedapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/jobapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/libloaderapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/memoryapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/namedpipeapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/namespaceapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/processenv.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/processthreadsapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/processtopologyapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/profileapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/realtimeapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/securityappcontainer.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/securitybaseapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/synchapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sysinfoapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/systemtopologyapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/threadpoolapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/threadpoollegacyapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/utilapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wow64apiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winerror.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/fltwinerror.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/timezoneapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wingdi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/pshpack1.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winuser.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/tvout.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winnls.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/datetimeapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stringapiset.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wincon.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winver.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winreg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/reason.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winnetwk.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wnnc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/virtdisk.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/cderr.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/dde.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ddeml.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/dlgs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/lzexpand.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/mmsystem.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/nb30.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcdce.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcdcep.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcnsi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcnterr.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcasync.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/shellapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winperf.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winsock.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_bsd_types.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/inaddr.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_socket_types.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_fd_types.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_ip_types.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_ip_mreq1.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_wsadata.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_xmitfile.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_wsa_errnos.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wincrypt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/bcrypt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ncrypt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/dpapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winscard.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wtypes.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcndr.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcnsip.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/rpcsal.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/ole2.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/objbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/combaseapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/wtypesbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/unknwnbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/objidlbase.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/cguid.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/objidl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/unknwn.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/urlmon.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/oleidl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/servprov.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/msxml.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/oaidl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/propidl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/oleauto.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winioctl.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winsmcrd.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winspool.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/prsht.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/commdlg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stralign.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stralign_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/winsvc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/mcx.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/imm.h version.h \
+ os/threads_windows.h os/poll_windows.h
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/errno.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/limits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/string.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdio.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_stdio_config.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_off_t.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/swprintf.inl:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdio_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/assert.h:
+
+libusbi.h:
+
+../config.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/time.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_timeval.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sys/timeb.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/sys/timeb_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pthread_time.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdarg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdarg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_stdarg.h:
+
+libusb.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sys/types.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/windows.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sdkddkver.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/excpt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/windef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winapifamily.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/minwindef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/specstrings.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sal.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/concurrencysal.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/driverspecs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winnt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_unicode.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ctype.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/apiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/intrin-impl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/basetsd.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/guiddef.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/emmintrin.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/xmmintrin.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/mmintrin.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/mm_malloc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack4.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/poppack.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack4.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack2.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/poppack.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack2.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack8.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack8.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ktmtypes.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/apisetcconv.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/minwinbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/bemapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/debugapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/errhandlingapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/fibersapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/fileapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/handleapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/heapapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ioapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/interlockedapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/jobapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/libloaderapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/memoryapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/namedpipeapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/namespaceapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/processenv.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/processthreadsapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/processtopologyapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/profileapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/realtimeapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/securityappcontainer.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/securitybaseapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/synchapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sysinfoapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/systemtopologyapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/threadpoolapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/threadpoollegacyapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/utilapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wow64apiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winerror.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/fltwinerror.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/timezoneapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wingdi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/pshpack1.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winuser.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/tvout.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winnls.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/datetimeapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stringapiset.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wincon.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winver.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winreg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/reason.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winnetwk.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wnnc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/virtdisk.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/cderr.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/dde.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ddeml.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/dlgs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/lzexpand.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/mmsystem.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/nb30.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcdce.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcdcep.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcnsi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcnterr.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcasync.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/shellapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winperf.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winsock.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_bsd_types.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/inaddr.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_socket_types.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_fd_types.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_ip_types.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_ip_mreq1.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_wsadata.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_xmitfile.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/psdk_inc/_wsa_errnos.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wincrypt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/bcrypt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ncrypt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/dpapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winscard.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wtypes.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcndr.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcnsip.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/rpcsal.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/ole2.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/objbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/combaseapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/wtypesbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/unknwnbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/objidlbase.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/cguid.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/objidl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/unknwn.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/urlmon.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/oleidl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/servprov.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/msxml.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/oaidl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/propidl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/oleauto.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winioctl.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winsmcrd.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winspool.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/prsht.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/commdlg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stralign.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stralign_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/winsvc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/mcx.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/imm.h:
+
+version.h:
+
+os/threads_windows.h:
+
+os/poll_windows.h:

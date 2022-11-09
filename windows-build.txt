@@ -1,0 +1,69 @@
+Download build pack at : https://tinyurl.com/f931lrp9
+
+**************************************************************************************
+* Install mingw32                                                                    *
+**************************************************************************************
+Use installer in this package
+Make sure to check the option for "Download latest repository catalogs".
+I just selected all the check boxes (excluding "Fortran Compiler") so that everything
+was installed.
+
+**************************************************************************************
+* Run the MSYS shell for the first time to create your user directory                *
+**************************************************************************************
+(Start Icon/keyboard key ==> All Programs ==> MinGW ==> MinGW Shell).
+This will create your user directory for you.
+
+**************************************************************************************
+* Install libpdcurses                                                                *
+**************************************************************************************
+Type the lines below to install libpdcurses.
+mingw-get install mingw32-libpdcurses
+mingw-get install mingw32-pdcurses
+Ctrl-D or typing "logout" and pressing the enter key should get you out of the
+window.
+
+**************************************************************************************
+* Install Packages                                                                   *
+**************************************************************************************
+unzip MinGW.7z
+copy/paste everything in your \MinGW\ folder
+
+**************************************************************************************
+* Install git for windows                                                                   *
+**************************************************************************************
+Install git for windows (all default setup)
+
+**************************************************************************************
+* Build cgminer.exe                                                                  *
+**************************************************************************************
+Run the MinGW MSYS shell
+(Start Icon/keyboard key ==> All Programs ==> MinGW ==> MinGW Shell).
+      git clone https://github.com/wareck/cgminer-lketc.git
+      cd cgminer-lketc
+      autoreconf -fvi
+      CFLAGS="-O2 -msse2" ./configure --enable-scrypt --enable-zeus --enable-gridseed --enable-lketc
+      make
+      strip cgminer.exe
+Ctrl-D or typing "logout" and pressing the enter key should get you out of the window.
+
+**************************************************************************************
+* Copy files to a build directory/folder                                             *
+**************************************************************************************
+Make a directory and copy the following files into it. This will be your CGMiner
+Folder that you use for mining. Remember the .cl filenames could change on later
+releases. If you installed a different version of libcurl then some of those dll's
+may be different as well.
+  cgminer.exe     from \MinGW\msys\1.0\home\(username)\cgminer-x.x.x
+  README          from \MinGW\msys\1.0\home\(username)\cgminer-x.x.x
+  libcurl.dll     from \MinGW\bin
+  libeay32.dll	  from \MinGW\bin
+  libgcc_s_dw2-1  from \MinGW\bin
+  libidn-11.dll   from \MinGW\bin
+  libpdcurses.dll from \MinGW\bin
+  pthreadGC2.dll  from \MinGW\bin
+  ssleay32.dll    from \MinGW\bin
+  zlib1.dll	  from \MinGW\bin
+(you can also use the folder)
+
+

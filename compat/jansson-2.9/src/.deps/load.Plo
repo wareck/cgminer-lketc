@@ -1,0 +1,106 @@
+load.lo: load.c /opt/mxe/usr/i686-w64-mingw32.static/include/errno.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/limits.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdio.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_stdio_config.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_off_t.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/swprintf.inl \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdio_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/string.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/assert.h jansson.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdarg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdarg.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_stdarg.h \
+ jansson_config.h jansson_private.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h hashtable.h \
+ strbuffer.h utf.h ../jansson_private_config.h \
+ /opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h \
+ /opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/errno.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/crtdefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_mac.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_secapi.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/vadefs.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sdks/_mingw_ddk.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/limits.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include-fixed/syslimits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/limits.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdio.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_stdio_config.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_off_t.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/swprintf.inl:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdio_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdlib.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/corecrt_wstdlib.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/stdlib_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/malloc.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/string.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/sec_api/string_s.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/assert.h:
+
+jansson.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdarg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdarg.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/_mingw_stdarg.h:
+
+jansson_config.h:
+
+jansson_private.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stddef.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stddef.h:
+
+hashtable.h:
+
+strbuffer.h:
+
+utf.h:
+
+../jansson_private_config.h:
+
+/opt/mxe/usr/lib/gcc/i686-w64-mingw32.static/5.5.0/include/stdint.h:
+
+/opt/mxe/usr/i686-w64-mingw32.static/include/stdint.h:
