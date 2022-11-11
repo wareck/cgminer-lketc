@@ -270,7 +270,7 @@ AM_CONDITIONAL([HAS_BITMINE_A1], [test x$bitmine_A1 = xyes])
 blockerupter="no"
 
 AC_ARG_ENABLE([blockerupter],
-	[AC_HELP_STRING([--enable-blockerupter],[Compile support for BlockErupter (default disabled)])],
+	[AC_HELP_STRING([--enable-blockerupter],[Compile support for BlockErupter Tube/Prisma (default disabled)])],
 	[blockerupter=$enableval]
 	)
 if test "x$blockerupter" = xyes; then
@@ -693,6 +693,7 @@ echo "------------------------------------------------------------------------"
 echo "$PACKAGE $VERSION"
 echo "------------------------------------------------------------------------"
 echo
+echo
 echo "Configuration Options Summary:"
 echo
 
@@ -708,13 +709,11 @@ echo "  curses.TUI...........: $cursesmsg"
 if test "x$scrypt" != xno; then
 	echo
 	echo "  Scrypt...............: Enabled"
-	echo
 else
 	echo
 	echo "  Scrypt...............: Disabled"
-	echo
 fi
-
+echo
 if test "x$ants1" = xyes; then
 	echo "  Antminer.S1.Bitmain..: Enabled"
 else
@@ -863,7 +862,7 @@ fi
 #Add any new device to this, along with a no on the end of the test
 if test "x$avalon$avalon2$bab$bflsc$bitforce$bitfury$blockerupter$hashfast$hashratio$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$ants2$sp10$sp30$gridseed$zeus$lketc" = xnononononononononononononononononononononononono; then
 	AC_MSG_ERROR([No mining devices configured in])
-	echo ""
+	echo
 fi
 
 if test "x$standalone" = xyes; then
