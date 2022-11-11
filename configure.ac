@@ -652,6 +652,8 @@ else
 	LIBSYSTEMD_LIBS=""
 fi
 
+AM_CONDITIONAL([WANT_STATIC_LIBUSB], [test x$dlibusb = xno])
+
 #check execv signature
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 		   #include <process.h>
