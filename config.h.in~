@@ -94,20 +94,17 @@
    */
 #undef HAVE_DECL_MEMMEM
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define if you have jansson >= 2.6 */
+#undef HAVE_JANSSON
 
 /* Defined to 1 if libcurl support built in */
 #undef HAVE_LIBCURL
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
-
-/* Defined to 1 if udev support available */
-#undef HAVE_LIBUDEV
 
 /* Define if you have libusb-1.0 */
 #undef HAVE_LIBUSB
@@ -272,6 +269,9 @@
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
+/* Define to 1 if you have the <uthash.h> header file. */
+#undef HAVE_UTHASH_H
+
 /* Define if __attribute__((warn_unused_result)) */
 #undef HAVE_WARN_UNUSED_RESULT
 
@@ -280,9 +280,6 @@
 
 /* Define if you have the 'wchar_t' type. */
 #undef HAVE_WCHAR_T
-
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
-#undef LT_OBJDIR
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
 #undef MAP_ANONYMOUS
@@ -387,6 +384,9 @@
 
 /* Defined to 1 if KnC miner support is wanted */
 #undef USE_KNC
+
+/* Defined to 1 if libsystemd support is wanted */
+#undef USE_LIBSYSTEMD
 
 /* Defined to 1 if Lketc support is wanted */
 #undef USE_LKETC
