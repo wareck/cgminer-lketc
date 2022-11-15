@@ -9612,7 +9612,7 @@ int main(int argc, char *argv[])
 
 	if (!config_loaded)
 		load_default_config();
-
+#ifdef USE_SCRYPT
 	if (!opt_sha256 && !opt_scrypt)
 		early_quit(1, "Must explicitly specify mining algorithm (--sha256 or --scrypt)");
 #else
