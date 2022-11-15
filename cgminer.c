@@ -1596,10 +1596,10 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_CBARG("--sched-stop",
 		     set_sched_stop, NULL, &opt_set_sched_stop,
 		     "Set a time of day in HH:MM to stop mining (will quit without a start time)"),
+#ifdef USE_SCRYPT
 	OPT_WITHOUT_ARG("--sha256",
 		     opt_set_bool, &opt_sha256,
 		     "Use the SHA-256 algorithm for mining"),
-#ifdef USE_SCRYPT
 	OPT_WITHOUT_ARG("--scrypt",
 		     opt_set_bool, &opt_scrypt,
 		     "Use the scrypt algorithm for mining"),
@@ -9615,7 +9615,9 @@ int main(int argc, char *argv[])
 
 	if (!opt_sha256 && !opt_scrypt)
 		early_quit(1, "Must explicitly specify mining algorithm (--sha256 or --scrypt)");
-
+#else
+	    opt_sha256=true;
+#endif
 	if (opt_benchmark || opt_benchfile) {
 		struct pool *pool;
 
