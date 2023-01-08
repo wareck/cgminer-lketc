@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #ifndef WIN32
   #include <sys/select.h>
   #include <termios.h>
@@ -61,7 +62,7 @@ static struct name_chip_map {
 	int	chips_count;
 } lketc_models[] = {
 	{ "lketc",		1  },
-	{ "dragon",		2  },
+	{ "Twins",		2  },
 	{ NULL, 0 }
 };
 
@@ -79,11 +80,12 @@ static void flush_uart(int fd)
 #endif
 }
 
-static int __maybe_unused flush_fd(int fd)
+/*static int __maybe_unused flush_fd(int fd)
 {
 	static char discard[10];
 	return read(fd, discard, sizeof(discard));
 }
+*/
 
 static void rev(unsigned char *s, size_t l)
 {
@@ -107,7 +109,7 @@ static int log_2(int value)
 	return x;
 }
 
-static uint32_t __maybe_unused chip_index(uint32_t value, int bit_num)
+/*static uint32_t __maybe_unused chip_index(uint32_t value, int bit_num)
 {
 	uint32_t newvalue = 0;
 	int i;
@@ -124,6 +126,7 @@ static uint32_t __maybe_unused chip_index(uint32_t value, int bit_num)
 
 	return newvalue;
 }
+*/
 
 static int lowest_pow2(int min)
 {
@@ -248,7 +251,7 @@ static int lketc_serial_read(int fd, void *buf, size_t len, int read_count, stru
 		total += (size_t)ret;
 	}
 
-#if LKETC_PROTOCOL_DEBUG
+/*#if LKETC_PROTOCOL_DEBUG
 	if (opt_lketc_debug) {
 		char *hexstr;
 		if (total > 0) {
@@ -260,7 +263,7 @@ static int lketc_serial_read(int fd, void *buf, size_t len, int read_count, stru
 		}
 	}
 #endif
-
+*/
 	return total;
 }
 

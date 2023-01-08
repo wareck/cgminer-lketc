@@ -1,127 +1,128 @@
+/* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Default visibility */
-#undef DEFAULT_VISIBILITY
+#define DEFAULT_VISIBILITY __attribute__((visibility("default")))
 
 /* Debug message logging */
-#undef ENABLE_DEBUG_LOGGING
+/* #undef ENABLE_DEBUG_LOGGING */
 
 /* Message logging */
-#undef ENABLE_LOGGING
+#define ENABLE_LOGGING 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `udev' library (-ludev). */
-#undef HAVE_LIBUDEV
+#define HAVE_LIBUDEV 1
 
 /* Define to 1 if you have the <libudev.h> header file. */
-#undef HAVE_LIBUDEV_H
+#define HAVE_LIBUDEV_H 1
 
 /* Define to 1 if you have the <linux/filter.h> header file. */
-#undef HAVE_LINUX_FILTER_H
+/* #undef HAVE_LINUX_FILTER_H */
 
 /* Define to 1 if you have the <linux/netlink.h> header file. */
-#undef HAVE_LINUX_NETLINK_H
+/* #undef HAVE_LINUX_NETLINK_H */
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <poll.h> header file. */
-#undef HAVE_POLL_H
+#define HAVE_POLL_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#define HAVE_STRING_H 1
 
 /* Define to 1 if the system has the type `struct timespec'. */
-#undef HAVE_STRUCT_TIMESPEC
+#define HAVE_STRUCT_TIMESPEC 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
+#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
-#undef LT_OBJDIR
+#define LT_OBJDIR ".libs/"
 
 /* Darwin backend */
-#undef OS_DARWIN
+/* #undef OS_DARWIN */
 
 /* Linux backend */
-#undef OS_LINUX
+#define OS_LINUX 1
 
 /* OpenBSD backend */
-#undef OS_OPENBSD
+/* #undef OS_OPENBSD */
 
 /* Windows backend */
-#undef OS_WINDOWS
+/* #undef OS_WINDOWS */
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "libusb"
 
 /* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "libusb-devel@lists.sourceforge.net"
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "libusb"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "libusb 1.0.16-rc10"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "libusb"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL "http://www.libusb.org/"
 
 /* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#define PACKAGE_VERSION "1.0.16-rc10"
 
 /* type of second poll() argument */
-#undef POLL_NFDS_TYPE
+#define POLL_NFDS_TYPE nfds_t
 
 /* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Use POSIX Threads */
-#undef THREADS_POSIX
+#define THREADS_POSIX 1
 
 /* timerfd headers available */
-#undef USBI_TIMERFD_AVAILABLE
+#define USBI_TIMERFD_AVAILABLE 1
 
 /* Use udev for device enumeration/hotplug */
-#undef USE_UDEV
+#define USE_UDEV 1
 
 /* Version number of package */
-#undef VERSION
+#define VERSION "1.0.16-rc10"
 
 /* Use GNU extensions */
-#undef _GNU_SOURCE
+#define _GNU_SOURCE 1
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-#undef inline
+/* #undef inline */
 #endif

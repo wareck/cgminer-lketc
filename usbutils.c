@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2013 Andrew Smith
- * Copyright 2013-2014 Con Kolivas <kernel@kolivas.org>
+ * Copyright 2013-2015 Con Kolivas <kernel@kolivas.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -1513,7 +1513,11 @@ static void cgusb_check_init()
 	if (stats_initialised == false) {
 		// N.B. environment LIBUSB_DEBUG also sets libusb_set_debug()
 		if (opt_usbdump >= 0) {
+#if LIBUSB_API_VERSION >= 0x01000106
+			libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, opt_usbdump);
+#else
 			libusb_set_debug(NULL, opt_usbdump);
+#endif
 			usb_all(opt_usbdump);
 		}
 		stats_initialised = true;
@@ -1993,10 +1997,11 @@ static void _usb_uninit(struct cgpu_info *cgpu)
 		for (ifinfo = cgpu->usbdev->found->intinfo_count - 1; ifinfo >= 0; ifinfo--) {
 			libusb_release_interface(cgpu->usbdev->handle,
 						 THISIF(cgpu->usbdev->found, ifinfo));
-		}
+
 #ifdef LINUX
 		libusb_attach_kernel_driver(cgpu->usbdev->handle, THISIF(cgpu->usbdev->found, ifinfo));
 #endif
+		}
 		cg_wlock(&cgusb_fd_lock);
 		libusb_close(cgpu->usbdev->handle);
 		cgpu->usbdev->handle = NULL;
@@ -3839,16 +3844,12 @@ void usb_cleanup(void)
 			case DRIVER_hashfast:
 			case DRIVER_gridseed:
 			case DRIVER_zeus:
+			case DRIVER_lketc:
 				DEVWLOCK(cgpu, pstate);
 				release_cgpu(cgpu);
 				DEVWUNLOCK(cgpu, pstate);
 				count++;
 				break;
-			case DRIVER_lketc:
-				DEVWLOCK(cgpu, pstate);
-                                release_cgpu(cgpu);
-                                DEVWUNLOCK(cgpu, pstate);
-                                count++;
 			default:
 				break;
 		}

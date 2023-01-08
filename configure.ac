@@ -1,8 +1,8 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
-m4_define([v_min], [7])
-m4_define([v_mic], [1])
+m4_define([v_min], [8])
+m4_define([v_mic], [0])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic-scrypt-wrk])
 m4_define([lt_rev], m4_eval(v_maj + v_min))
@@ -652,6 +652,23 @@ else
 	LIBSYSTEMD_LIBS=""
 fi
 
+extranonce="yes"
+
+AC_ARG_ENABLE([extranonce],
+        [AC_HELP_STRING([--disable-extranonce],[Disable extranonce.subscribe support ])],
+        [extranonce=$enableval]
+)
+AC_ARG_ENABLE([extranonce],
+        [AC_HELP_STRING([--enable-extranonce],[Enable extranonce.subscribe support (NiceHash)])],
+        [extranonce=$enableval]
+)
+
+
+if test "x$extranonce" != xno; then
+        AC_DEFINE([USE_XTRANONCE], [1], [Defined to 1 if extranonce.subscribe support is wanted])
+fi
+
+
 AM_CONDITIONAL([WANT_STATIC_LIBUSB], [test x$dlibusb = xno])
 
 #check execv signature
@@ -745,12 +762,17 @@ else
 fi
 
 if test "x$dlibusb" != xno; then
-        echo "  libusb_system........: Enabled: $LIBUSB_LIBS"
+        echo "  libusb_system........: $LIBUSB_LIBS"
 else
-	echo "  libusb_system........: Disabled"
+	echo "  libusb_internal......: $LIBUSB_LIBS"
 fi
+	echo "  curses.TUI...........: $cursesmsg"
 
-echo "  curses.TUI...........: $cursesmsg"
+if test "x$extranonce" != xno; then
+	echo "  extranonce.subscribe.: Enabled"
+else
+        echo "  extranonce.subscribe.: Disabled"
+fi
 
 if test "x$scrypt" != xno; then
 	echo

@@ -1,5 +1,6 @@
 /*
- * Copyright 2011-2014 Con Kolivas
+ * Copyright 2011-2018 Con Kolivas
+ * Copyright 2011-2015 Andrew Smith
  * Copyright 2010 Jeff Garzik
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -252,6 +253,46 @@ int Inet_Pton(int af, const char *src, void *dst)
 	}
 }
 #endif
+
+/* Align a size_t to 4 byte boundaries for fussy arches */
+static inline void align_len(size_t *len)
+{
+	if (*len % 4)
+		*len += 4 - (*len % 4);
+}
+
+void *_cgmalloc(size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = malloc(size);
+	if (unlikely(!ret))
+		quit(1, "Failed to malloc size %d from %s %s:%d", (int)size, file, func, line);
+	return ret;
+}
+
+void *_cgcalloc(const size_t memb, size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = calloc(memb, size);
+	if (unlikely(!ret))
+		quit(1, "Failed to calloc memb %d size %d from %s %s:%d", (int)memb, (int)size, file, func, line);
+	return ret;
+}
+
+void *_cgrealloc(void *ptr, size_t size, const char *file, const char *func, const int line)
+{
+	void *ret;
+
+	align_len(&size);
+	ret = realloc(ptr, size);
+	if (unlikely(!ret))
+		quit(1, "Failed to realloc size %d from %s %s:%d", (int)size, file, func, line);
+	return ret;
+}
 
 struct tq_ent {
 	void			*data;
@@ -1665,7 +1706,11 @@ bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port)
 		char *slash;
 
 		snprintf(port, 6, "%.*s", port_len, port_start);
+#ifdef USE_XTRANONCE
 		slash = strpbrk(port, "/#");
+#else
+		slash = strchr(port, '/');
+#endif
 		if (slash)
 			*slash = '\0';
 	} else
@@ -2141,6 +2186,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 	return true;
 }
 
+#ifdef USE_XTRANONCE
 static bool parse_extranonce(struct pool *pool, json_t *val)
 {
 	char s[RBUFSIZE], *nonce1;
@@ -2174,6 +2220,7 @@ static bool parse_extranonce(struct pool *pool, json_t *val)
 
 	return true;
 }
+#endif
 
 static void __suspend_stratum(struct pool *pool)
 {
@@ -2339,12 +2386,12 @@ bool parse_method(struct pool *pool, char *s)
 		ret = parse_diff(pool, params);
 		goto out_decref;
 	}
-
+#ifdef USE_XTRANONCE
 	if (!strncasecmp(buf, "mining.set_extranonce", 21)) {
 		ret = parse_extranonce(pool, params);
 		goto out_decref;
 	}
-
+#endif
 	if (!strncasecmp(buf, "client.reconnect", 16)) {
 		ret = parse_reconnect(pool, params);
 		goto out_decref;
@@ -2370,7 +2417,7 @@ out_decref:
 out:
 	return ret;
 }
-
+#ifdef USE_XTRANONCE
 bool subscribe_extranonce(struct pool *pool)
 {
 	json_t *val = NULL, *res_val, *err_val;
@@ -2441,6 +2488,7 @@ out:
 	json_decref(val);
 	return ret;
 }
+#endif
 
 bool auth_stratum(struct pool *pool)
 {
@@ -2915,78 +2963,6 @@ void suspend_stratum(struct pool *pool)
 	mutex_unlock(&pool->stratum_lock);
 }
 
-bool extranonce_subscribe(struct pool *pool)
-{
-	bool ret = false, recvd = false, noresume = false, sockd = false;
-	char s[RBUFSIZE], *sret = NULL, *nonce1, *sessionid;
-	json_t *val = NULL, *res_val, *err_val;
-	json_error_t err;
-	int n2size;
-
-//resend:
-//	if (!setup_stratum_socket(pool)) {
-//		sockd = false;
-//		goto out;
-//	}
-//
-//	sockd = true;
-//
-//	if (recvd) {
-//		/* Get rid of any crap lying around if we're resending */
-//		clear_sock(pool);
-//		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": []}", swork_id++);
-//	} else {
-//		if (pool->sessionid)
-//			sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\", \"%s\"]}", swork_id++, pool->sessionid);
-//		else
-//			sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
-//	}
-	sprintf(s,"{\"id\": %d, \"method\": \"mining.extranonce.subscribe\", \"params\": []}", swork_id++);
-	if (__stratum_send(pool, s, strlen(s)) != SEND_OK) {
-		applog(LOG_DEBUG, "Failed to send s in extranonce_subscribe");
-		goto out;
-	}
-
-	if (!socket_full(pool, DEFAULT_SOCKWAIT)) {
-		applog(LOG_DEBUG, "Timed out waiting for response in extranonce_subscribe");
-		goto out;
-	}
-
-	sret = recv_line(pool);
-	if (!sret)
-		goto out;
-
-	recvd = true;
-
-	val = JSON_LOADS(sret, &err);
-	free(sret);
-	if (!val) {
-		applog(LOG_INFO, "JSON decode failed(%d): %s", err.line, err.text);
-		goto out;
-	}
-
-	res_val = json_object_get(val, "result");
-	err_val = json_object_get(val, "error");
-
-	if (!res_val || json_is_null(res_val) ||
-	    (err_val && !json_is_null(err_val))) {
-		char *ss;
-
-		if (err_val)
-			ss = json_dumps(err_val, JSON_INDENT(3));
-		else
-			ss = strdup("(unknown reason)");
-
-		applog(LOG_INFO, "JSON-RPC decode failed: %s", ss);
-
-		free(ss);
-
-		goto out;
-	}
-out:
-	return ret;
-}
-
 bool initiate_stratum(struct pool *pool)
 {
 	bool ret = false, recvd = false, noresume = false, sockd = false;
@@ -3134,8 +3110,10 @@ bool restart_stratum(struct pool *pool)
 	if (pool->stratum_active)
 		suspend_stratum(pool);
 	if (!initiate_stratum(pool))
+#ifdef USE_XTRANONCE
 		goto out;
 	if (pool->extranonce_subscribe && !subscribe_extranonce(pool))
+#endif
 		goto out;
 	if (!auth_stratum(pool))
 		goto out;

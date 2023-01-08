@@ -1,6 +1,6 @@
 /*
- * Copyright 2011-2014 Andrew Smith
- * Copyright 2011-2014 Con Kolivas
+ * Copyright 2011-2022 Andrew Smith
+ * Copyright 2011-2015,2018 Con Kolivas
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -140,9 +140,11 @@ static const char SEPARATOR = '|';
 
 static const char *APIVERSION = "3.7";
 static const char *DEAD = "Dead";
+#if defined(HAVE_AN_ASIC) || defined(HAVE_AN_FPGA)
 static const char *SICK = "Sick";
 static const char *NOSTART = "NoStart";
 static const char *INIT = "Initialising";
+#endif
 static const char *DISABLED = "Disabled";
 static const char *ALIVE = "Alive";
 static const char *REJECTING = "Rejecting";
@@ -226,7 +228,7 @@ static const char *DEVICECODE = ""
 #endif
 
 #ifdef USE_LKETC
-           	"LKE "
+           		"LKE "
 #endif
 			"";
 
@@ -1520,7 +1522,10 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 #ifdef HAVE_AN_FPGA
 						, pga
 #endif
-						);
+#if !defined(HAVE_AN_ASIC) || !defined(HAVE_AN_FPGA)
+						, NULL //remove error if compile without driver (needed for openwrt tests)
+#endif
+					);
 					break;
 				case PARAM_CMD:
 					snprintf(buf, LIMSIZ, codes[i].description, JSON_COMMAND);
@@ -2236,10 +2241,12 @@ static void pgastatus(struct io_data *io_data, int pga, bool isjson, bool precom
 static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
 	bool io_open = false;
-	int devcount = 0;
 	int numasc = 0;
 	int numpga = 0;
+#if defined(HAVE_AN_ASIC) || defined(HAVE_AN_FPGA)
+	int devcount = 0;
 	int i;
+#endif
 
 #ifdef HAVE_AN_ASIC
 	numasc = numascs();
@@ -2286,10 +2293,12 @@ static void devstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
 static void edevstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
 	bool io_open = false;
-	int devcount = 0;
 	int numasc = 0;
 	int numpga = 0;
+#if defined(HAVE_AN_ASIC) || defined(HAVE_AN_FPGA)
+	int devcount = 0;
 	int i;
+#endif
 #ifdef USE_USBUTILS
 	time_t howoldsec = 0;
 #endif

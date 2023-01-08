@@ -1,5 +1,7 @@
 /*
- * Copyright 2011-2014 Con Kolivas
+ * Copyright 2011-2022 Andrew Smith
+ * Copyright 2011-2018 Con Kolivas
+ * Copyright 2011-2015 Andrew Smith
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
  *
@@ -40,6 +42,10 @@
 #include <semaphore.h>
 #endif
 
+#ifdef USE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -51,7 +57,6 @@
 #endif
 #include <ccan/opt/opt.h>
 #include <jansson.h>
-
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
 #else
@@ -410,7 +415,11 @@ static struct pool *currentpool = NULL;
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
+#ifdef USE_XTRANONCE
 static int total_urls, total_users, total_passes, total_userpasses, total_extranonce;
+#else
+static int total_urls, total_users, total_passes, total_userpasses;
+#endif
 
 static
 #ifndef HAVE_CURSES
@@ -728,8 +737,9 @@ struct pool *add_pool(void)
 	pool->rpc_proxy = NULL;
 	pool->quota = 1;
 	adjust_quota_gcd();
+#ifdef USE_XTRANONCE
 	pool->extranonce_subscribe = false;
-
+#endif
 	return pool;
 }
 
@@ -922,10 +932,12 @@ static char *set_url(char *arg)
 	struct pool *pool = add_url();
 
 	setup_url(pool, arg);
+#ifdef USE_XTRANONCE
 	if (strstr(pool->rpc_url, ".nicehash.com") || strstr(pool->rpc_url, "#xnsub")) {
 		pool->extranonce_subscribe = true;
 		applog(LOG_DEBUG, "Pool %d extranonce subscribing enabled.", pool->pool_no);
 	}
+#endif
 	return NULL;
 }
 
@@ -1013,7 +1025,7 @@ static char *set_userpass(const char *arg)
 
 	return NULL;
 }
-
+#ifdef USE_XTRANONCE
 static char *set_extranonce_subscribe(char *arg)
 {
 	struct pool *pool;
@@ -1028,7 +1040,7 @@ static char *set_extranonce_subscribe(char *arg)
 
 	return NULL;
 }
-
+#endif
 static char *enable_debug(bool *flag)
 {
 	*flag = true;
@@ -1374,8 +1386,13 @@ static struct opt_table opt_config_table[] = {
 		     "Enable drillbit automatic tuning <every>:[<gooderr>:<baderr>:<maxerr>]"),
 #endif
 	OPT_WITH_ARG("--expiry|-E",
-		     set_int_0_to_9999, opt_show_intval, &opt_expiry,
-		     "Upper bound on how many seconds after getting work we consider a share from it stale"),
+		     set_null, NULL, &opt_set_null,
+		     opt_hidden),
+#ifdef USE_XTRANONCE
+	OPT_WITHOUT_ARG("--extranonce-subscribe",
+			set_extranonce_subscribe, NULL,
+			"Enable 'extranonce' stratum subscribe"),
+#endif
 	OPT_WITHOUT_ARG("--failover-only",
 			opt_set_bool, &opt_fail_only,
 			"Don't leak work to backup pools when primary pool is lagging"),
@@ -2249,7 +2266,6 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 	pool->n2size = 8;
 	pool->coinbase_len = cbt_len + pool->n2size;
 	cal_len = pool->coinbase_len + 1;
-	align_len(&cal_len);
 	free(pool->coinbase);
 	pool->coinbase = calloc(cal_len, 1);
 	if (unlikely(!pool->coinbase))
@@ -5187,8 +5203,10 @@ void write_config(FILE *fcfg)
 				pool->rpc_proxy ? "|" : "",
 				json_escape(pool->rpc_url));
 		}
+#ifdef USE_XTRANONCE
 		if (pool->extranonce_subscribe)
-			fputs("\n\t\t\"extranonce-subscribe\" : true,", fcfg);
+		fputs("\n\t\t\"extranonce-subscribe\" : true,", fcfg);
+#endif
 		fprintf(fcfg, "\n\t\t\"user\" : \"%s\",", json_escape(pool->rpc_user));
 		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\"\n\t}", json_escape(pool->rpc_pass));
 		}
@@ -6732,7 +6750,11 @@ retry_stratum:
 		bool init = pool_tset(pool, &pool->stratum_init);
 
 		if (!init) {
+#ifdef USE_XTRANONCE
 			bool ret = initiate_stratum(pool) && (!pool->extranonce_subscribe || subscribe_extranonce(pool)) && auth_stratum(pool);
+#else
+			bool ret = initiate_stratum(pool) && auth_stratum(pool);
+#endif
 			if (ret)
 				init_stratum_threads(pool);
 			else

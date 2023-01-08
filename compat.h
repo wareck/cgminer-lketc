@@ -58,7 +58,6 @@ static inline int sleep(unsigned int secs)
 	return rem.tv_sec + (rem.tv_nsec ? 1 : 0);
 }
 #endif
-
 enum {
 	PRIO_PROCESS		= 0,
 };
