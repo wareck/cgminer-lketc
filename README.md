@@ -7,7 +7,7 @@ This file describes Lketc-specific settings and options.
 
 For general CGMiner information refer to doc/README.
 
-## LKETC usb miner ##
+### LKETC usb miner ###
 This code is forked from original cgminer-dmaxl-zeus.
 
 I made a custom driver for LKETC usb miner that you can find on ebay, like this:
