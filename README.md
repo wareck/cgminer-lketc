@@ -1,5 +1,4 @@
 ## cgminer 4.8.0-scrypt (zeus / gridseed / lketc support) ##
-## ==================================================== ##
 
 CGMiner 4.8.0 with GridSeed, Zeus and Lketc with Scrypt ASIC support.
 
