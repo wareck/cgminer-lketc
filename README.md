@@ -16,6 +16,8 @@ I made a custom driver for LKETC usb miner that you can find on ebay, like this:
 
 
 My code is base on Zeus scrypt Asic, but I made some changes to enable possibility to use Zeus and LKETC as same time (with tuning for each kind of miner)
+Why a separate driver instead of using zeus driver ?
+because
 
 to build this specific code:
 
