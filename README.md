@@ -18,16 +18,24 @@ I made a custom driver for LKETC usb miner that you can find on ebay, like this:
 My code is base on Zeus scrypt Asic, but I made some changes to enable possibility to use Zeus and LKETC as same time (with tuning for each kind of miner)
 
 Why a separate driver instead of using zeus driver ?
-because
+
+because lketc stick , they are clone of zeus but with cheaper component.
+
+In most case, they need a lower frequency to run properly. If you have a mix of zeus and lketc in your rig, it will interresting to separate zeus and lketc setup. 
 
 to build this specific code:
 
 	sudo apt-get update
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
 	libjansson-dev libncurses5-dev git libzip-dev
-	./autogen.sh
-	./configure --enable-scrypt --enable-lketc
+	git clone https://github.com/wareck/cgminer-lketc.git
+	cd cgminer-lketc
+	sudo usermod -a -G dialout,plugdev $USER
+	sudo cp 01-cgminer.rules /etc/udev/rules.d/
+	CFLAGS="-O2 -march=native" ./autogen.sh
+	./configure --enable-scrypt --enable-lketc --enable-zeus --enable-gridseed
 	make
+	sudo reboot
 
 ### Option Summary ###
 
