@@ -27,12 +27,15 @@ to build this specific code:
 	sudo apt-get update
 	sudo apt-get install build-essential autoconf automake libtool pkg-config libcurl4-openssl-dev libudev-dev \
 	libjansson-dev libncurses5-dev git libzip-dev
+	
 	git clone https://github.com/wareck/cgminer-lketc.git
 	cd cgminer-lketc
+	
 	sudo usermod -a -G dialout,plugdev $USER
 	sudo cp 01-cgminer.rules /etc/udev/rules.d/
+	
 	CFLAGS="-O2 -march=native" ./autogen.sh
-	./configure --enable-scrypt --enable-lketc --enable-zeus --enable-gridseed
+	./configure --enable-scrypt
 	make
 	sudo reboot
 
